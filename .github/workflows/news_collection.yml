@@ -26,7 +26,7 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run news collection pipeline
-      run: python pypeline.py
+      run: python pipeline.py
       env:
         GITHUB_ACTIONS: "true"
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
