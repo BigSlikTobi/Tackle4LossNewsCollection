@@ -50,7 +50,7 @@ async def fetch_news(
     api_token: str,
     schema: Type[BaseModel] = NewsItem,
     max_items: int = 10,
-    time_period: str = "last 48 hours"
+    time_period: str = "last 24 hours"
 ) -> List[Dict[str, Any]]:
     """
     Fetch news from a specific website using AI-powered extraction.
