@@ -56,3 +56,49 @@ async def get_default_sources() -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error loading sources from Supabase: {e}")
         return []  # Return empty list if sources cannot be loaded
+
+async def get_team_news_sources() -> List[Dict[str, Any]]:
+    """
+    Fetch team news sources from Supabase database.
+    
+    Returns:
+        List of team news source configurations
+    """
+    try:
+        supabase_url = os.getenv('SUPABASE_URL')
+        supabase_key = os.getenv('SUPABASE_KEY')
+        
+        if not supabase_url or not supabase_key:
+            raise ValueError("Supabase credentials not found in environment variables")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{supabase_url}/rest/v1/TeamNewsSource",
+                headers={
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}"
+                },
+                params={
+                    "select": "*",
+                    "isExecute": "eq.true"  # Only fetch sources where isExecute is true
+                }
+            )
+            response.raise_for_status()
+            sources = response.json()
+            
+            # Transform the data to match the expected format
+            formatted_sources = [{
+                "id": source["id"],
+                "created_at": source["created_at"],
+                "url": source["url"],
+                "base_url": source["baseUrl"],
+                "team": source["Team"],
+                "execute": source["isExecute"]
+            } for source in sources]
+            
+            logger.info(f"Successfully loaded {len(formatted_sources)} team news sources from Supabase")
+            return formatted_sources
+            
+    except Exception as e:
+        logger.error(f"Error loading team news sources from Supabase: {e}")
+        return []  # Return empty list if sources cannot be loaded
