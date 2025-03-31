@@ -53,7 +53,7 @@ def load_blacklist() -> List[str]:
     try:
         with open('blacklist.json', 'r') as f:
             blacklist_data = json.load(f)
-            return [item["url"] for item in blacklist_data]
+            return [item.get("url") for item in blacklist_data if item.get("url") is not None]
     except FileNotFoundError as e:
         logger.error(f"File not found: {e}")
         return []
