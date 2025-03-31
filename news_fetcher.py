@@ -43,6 +43,34 @@ MODEL_MAP = {
     LLMSelector.DEEPSEEK: "deepseek-reasoner",  
 }
 
+def load_blacklist() -> List[str]:
+    """
+    Load the blacklisted URLs from blacklist.json
+    
+    Returns:
+        List of blacklisted URLs
+    """
+    try:
+        with open('blacklist.json', 'r') as f:
+            blacklist_data = json.load(f)
+            return [item["url"] for item in blacklist_data]
+    except Exception as e:
+        logger.error(f"Error loading blacklist.json: {e}")
+        return []
+
+def is_url_blacklisted(url: str, blacklist: List[str]) -> bool:
+    """
+    Check if a URL matches any blacklisted URL pattern
+    
+    Args:
+        url: URL to check
+        blacklist: List of blacklisted URLs
+        
+    Returns:
+        True if URL is blacklisted, False otherwise
+    """
+    return any(url.startswith(blacklisted_url) for blacklisted_url in blacklist)
+
 async def fetch_news(
     url: str,
     base_url: str,
@@ -67,6 +95,9 @@ async def fetch_news(
     Returns:
         List of news items as dictionaries
     """
+    
+    # Load blacklist at the start of fetch_news
+    blacklist = load_blacklist()
     
     # Enhanced LLM extraction strategy with improved prompt
     instruction = f"""
@@ -247,6 +278,11 @@ async def fetch_news(
             
             # Clean URL
             item["url"] = clean_url(item["url"])
+            
+            # Skip blacklisted URLs
+            if is_url_blacklisted(item["url"], blacklist):
+                logger.info(f"Skipping blacklisted URL: {item['url']}")
+                continue
             
             # Ensure isProcessed is set to False for new articles
             item["isProcessed"] = False
