@@ -87,7 +87,7 @@ class TeamNewsFetchingPipeline:
                 "href": article.get("href", ""),
                 "url": article.get("url", ""),
                 "publishedAt": article.get("publishedAt", ""),
-                "isProcesseed": False,  # Note the double 'e' to match the DB column name
+                "isProcessed": False,  # Note the double 'e' to match the DB column name
                 "contentType": None,
                 "author": None,
                 "content": None,
