@@ -54,8 +54,11 @@ def load_blacklist() -> List[str]:
         with open('blacklist.json', 'r') as f:
             blacklist_data = json.load(f)
             return [item["url"] for item in blacklist_data]
-    except Exception as e:
-        logger.error(f"Error loading blacklist.json: {e}")
+    except FileNotFoundError as e:
+        logger.error(f"File not found: {e}")
+        return []
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON: {e}")
         return []
 
 def is_url_blacklisted(url: str, blacklist: List[str]) -> bool:
