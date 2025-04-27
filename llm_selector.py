@@ -24,7 +24,7 @@ class LLMSelector:
     # Default models for each provider
     DEFAULT_MODELS = {
         OPENAI: {
-            "chat": "gpt-4"
+            "chat": "gpt-4o-mini"
         },
         GEMINI: {
             "chat": "gemini-pro"

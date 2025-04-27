@@ -1,132 +1,198 @@
 """
 Main script for running the news fetching pipeline.
 """
+from __future__ import annotations
+
 import asyncio
+import json
 import logging
 import os
 import sys
-import json
-from typing import Dict, List, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from dotenv import load_dotenv
 
-# Local imports
-from news_fetcher import fetch_from_all_sources
-from source_manager import get_default_sources
-from utils import clean_url, create_slug, extract_source_domain, format_href
-from llm_selector import LLMSelector, get_available_llm_providers
-from db_operations import DatabaseManager
-from database_functions import SupabaseClient
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+def setup_logging() -> None:
+    """Configure console **and** file logging.
+
+    Configuration via environment variables (all optional):
+    * ``LOG_LEVEL`` – ``DEBUG`` | ``INFO`` | ``WARNING`` | ``ERROR`` | ``CRITICAL`` (default: ``INFO``)
+    * ``LOG_DIR``   – directory for log files (default: ``./logs``)
+    * ``LOG_FILE``  – filename   (default: ``pipeline.log`` inside *LOG_DIR*)
+    """
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+
+    # ‼ we create the directory first so FileHandler never fails on GitHub Actions
+    log_dir = Path(os.getenv("LOG_DIR", "logs"))
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    log_file = Path(os.getenv("LOG_FILE", log_dir / "pipeline.log"))
+
+    # A *pretty* console handler if Rich is available, else plain stdout
+    try:
+        from rich.logging import RichHandler  # type: ignore
+
+        console_handler: logging.Handler = RichHandler(
+            show_time=False,
+            omit_repeated_times=False,
+            rich_tracebacks=True,
+        )
+    except Exception:  # pragma: no cover – Rich isn't a hard dependency
+        console_handler = logging.StreamHandler(sys.stdout)
+
+    file_handler = logging.FileHandler(log_file, encoding="utf-8", mode="a")
+
+    logging.basicConfig(
+        level=getattr(logging, log_level, logging.INFO),
+        format="%(asctime)s - %(levelname)s - %(name)s:%(lineno)d - %(message)s",
+        handlers=[console_handler, file_handler],
+    )
+
+
+# Initialise logging *before* importing any local modules that also call
+# logging.getLogger() so everybody inherits the same configuration.
+setup_logging()
 logger = logging.getLogger(__name__)
+logger.debug("Logging initialised")
 
-# Load environment variables
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
 load_dotenv()
+
+# ---------------------------------------------------------------------------
+# Local imports (after logging + dotenv so they can rely on both)
+# ---------------------------------------------------------------------------
+from news_fetcher import fetch_from_all_sources  # noqa: E402
+from source_manager import get_default_sources  # noqa: E402
+from utils import clean_url, create_slug, extract_source_domain, format_href  # noqa: E402
+from llm_selector import LLMSelector  # noqa: E402
+from db_operations import DatabaseManager  # noqa: E402
+from database_functions import SupabaseClient  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Pipeline
+# ---------------------------------------------------------------------------
+
 
 class NewsFetchingPipeline:
     """Coordinates the news fetching pipeline."""
-    
-    def __init__(self, sources: Optional[List[Dict[str, Any]]] = None, llm_provider: Optional[str] = None, llm_model: Optional[str] = None):
-        """
-        Initialize the news fetching pipeline.
-        
-        Args:
-            sources: List of news sources to fetch from (uses defaults if None)
-            llm_provider: The LLM provider to use (e.g., "openai", "gemini")
-            llm_model: Specific model to use (optional)
-        """
+
+    def __init__(
+        self,
+        sources: Optional[List[Dict[str, Any]]] = None,
+        llm_provider: Optional[str] = None,
+        llm_model: Optional[str] = None,
+    ) -> None:
         self.sources = sources
         self.llm_provider = llm_provider or os.getenv("LLM_PROVIDER", "openai")
         self.llm_model = llm_model
         self.llm_selector = LLMSelector(provider=self.llm_provider, model=self.llm_model)
-        
-        # Initialize database components
+
+        # Database
         try:
             self.supabase_client = SupabaseClient()
             self.db_manager = DatabaseManager(supabase_client=self.supabase_client)
-            logger.info("Successfully initialized Supabase client and database manager")
-        except Exception as e:
-            logger.error(f"Failed to initialize database components: {e}")
+            logger.info("Supabase client and DB manager ready")
+        except Exception:
+            logger.exception("Failed to initialise Supabase components – falling back to console mode")
             self.supabase_client = None
             self.db_manager = DatabaseManager()
-            
-        logger.info(f"News fetching pipeline initialized with LLM: {self.llm_selector.get_llm_info()}")
-    
-    def validate_environment(self) -> bool:
-        """Validate that all required environment variables are set."""
-        required_vars = [
-            "SUPABASE_URL",
-            "SUPABASE_KEY"
-        ]
-        
-        for var in required_vars:
-            if not os.getenv(var):
-                logger.error(f"Missing required environment variable: {var}")
-                return False
+
+        logger.info("Pipeline uses LLM: %s", self.llm_selector.get_llm_info())
+
+    # ---------------------------------------------------------------------
+    # Helper methods
+    # ---------------------------------------------------------------------
+
+    @staticmethod
+    def _validate_env() -> bool:
+        """Return *True* when all mandatory environment variables are present."""
+        required = ("SUPABASE_URL", "SUPABASE_KEY")
+        missing = [var for var in required if not os.getenv(var)]
+        if missing:
+            for var in missing:
+                logger.error("Missing required environment variable: %s", var)
+            return False
         return True
 
+    # ---------------------------------------------------------------------
+    # Orchestration
+    # ---------------------------------------------------------------------
+
     async def run(self) -> int:
-        """Run the news fetching pipeline."""
-        if not self.validate_environment():
+        if not self._validate_env():
             return 1
-            
+
         try:
-            # Load sources if not provided in constructor
+            # -----------------------------------------------------------------
+            # 1) Load sources
+            # -----------------------------------------------------------------
             if self.sources is None:
                 self.sources = await get_default_sources()
-                
+
             if not self.sources:
-                logger.error("No sources configured")
+                logger.error("No sources configured – aborting")
                 return 1
-                
+
+            # -----------------------------------------------------------------
+            # 2) Fetch
+            # -----------------------------------------------------------------
             api_token = self.llm_selector.get_api_token()
-            
             news_items = await fetch_from_all_sources(
                 sources=self.sources,
                 provider=self.llm_provider,
-                api_token=api_token
+                api_token=api_token,
             )
-            
+
             if not news_items:
-                logger.warning("No news items fetched")
+                logger.warning("No news items fetched – pipeline ends early")
                 return 1
-                
-            logger.info(f"Successfully fetched {len(news_items)} news items") 
-            
-            # Format and store news items in the database
-            formatted_items = []
-            for item in news_items:
-                news_item = {
+
+            logger.info("Fetched %d news items", len(news_items))
+
+            # -----------------------------------------------------------------
+            # 3) Store
+            # -----------------------------------------------------------------
+            formatted = [
+                {
                     "uniqueName": item.get("id", ""),
                     "source": item.get("source", ""),
                     "headline": item.get("headline", ""),
                     "href": item.get("href", ""),
                     "url": item.get("url", ""),
                     "publishedAt": item.get("published_at", ""),
-                    "isProcessed": False
+                    "isProcessed": False,
                 }
-                formatted_items.append(news_item)
-                # Log each news item for debugging
-                logger.info(f"NewsItem: {json.dumps(news_item, indent=3, ensure_ascii=False)}")
-                
-            # Store all articles in the database
-            stored_count = self.db_manager.store_articles(formatted_items)
-            logger.info(f"Stored {stored_count} articles in the SourceArticles database table")
-                
+                for item in news_items
+            ]
+
+            for article in formatted:
+                logger.debug("NewsItem → %s", json.dumps(article, ensure_ascii=False))
+
+            stored = self.db_manager.store_articles(formatted)
+            logger.info("Stored %d articles in SourceArticles", stored)
             return 0
-          
-        except Exception as e:
-            logger.error(f"Pipeline error: {e}")
+
+        except Exception:
+            logger.exception("Pipeline crashed with an unhandled exception")
             return 1
 
-async def main():
-    """Main entry point for the news fetching pipeline."""
+
+# ---------------------------------------------------------------------------
+# CLI entry point
+# ---------------------------------------------------------------------------
+
+
+async def _main() -> int:  # pragma: no cover – keeps the real entry point tiny
     pipeline = NewsFetchingPipeline()
     return await pipeline.run()
 
-if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(asyncio.run(_main()))
