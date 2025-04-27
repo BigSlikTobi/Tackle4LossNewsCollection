@@ -17,8 +17,13 @@ from llm_selector import LLMSelector
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Define JSON schema for news items
+# ---------------------------------------------------------------------------
+# Data model
+# ---------------------------------------------------------------------------
+
 class NewsItem(BaseModel):
+    """Pydantic schema for a single scraped article."""
+
     uniqueName: str = Field(..., alias="id", description="Unique ID (lowercase with hyphens)")
     source: str = Field(..., description="Website domain or brand name")
     headline: str = Field(..., description="Extracted headline text")
@@ -27,52 +32,48 @@ class NewsItem(BaseModel):
     publishedAt: str = Field(..., alias="published_at", description="Publication date in YYYY-MM-DD format")
     isProcessed: bool = Field(default=False, description="Flag indicating if the item has been processed")
 
-# Map provider names to what Crawl4AI expects
+# ---------------------------------------------------------------------------
+# Static mappings
+# ---------------------------------------------------------------------------
+
 PROVIDER_MAP = {
     LLMSelector.OPENAI: "openai",
     LLMSelector.GEMINI: "google",
     LLMSelector.ANTHROPIC: "anthropic",
-    LLMSelector.DEEPSEEK: "deepseek",  # Changed to directly use 'deepseek' as provider
+    LLMSelector.DEEPSEEK: "deepseek",
 }
 
-# Model names for the Crawl4AI LLMExtractionStrategy
 MODEL_MAP = {
     LLMSelector.OPENAI: "gpt-4o-mini",
     LLMSelector.GEMINI: "gemini-pro",
     LLMSelector.ANTHROPIC: "claude-3-sonnet",
-    LLMSelector.DEEPSEEK: "deepseek-reasoner",  
+    LLMSelector.DEEPSEEK: "deepseek-reasoner",
 }
 
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
 def load_blacklist() -> List[str]:
-    """
-    Load the blacklisted URLs from blacklist.json
-    
-    Returns:
-        List of blacklisted URLs
-    """
+    """Read blacklist.json and return the list of URLs."""
     try:
-        with open('blacklist.json', 'r') as f:
-            blacklist_data = json.load(f)
-            return [item.get("url") for item in blacklist_data if item.get("url") is not None]
-    except FileNotFoundError as e:
-        logger.error(f"File not found: {e}")
+        with open("blacklist.json", "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+            return [item.get("url") for item in data if item.get("url")]
+    except FileNotFoundError:
+        logger.warning("blacklist.json not found – continuing without a blacklist")
         return []
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON: {e}")
+    except json.JSONDecodeError as exc:
+        logger.error("Invalid blacklist.json: %s", exc)
         return []
 
 def is_url_blacklisted(url: str, blacklist: List[str]) -> bool:
-    """
-    Check if a URL matches any blacklisted URL pattern
-    
-    Args:
-        url: URL to check
-        blacklist: List of blacklisted URLs
-        
-    Returns:
-        True if URL is blacklisted, False otherwise
-    """
-    return any(url.startswith(blacklisted_url) for blacklisted_url in blacklist)
+    """Return *True* if *url* starts with any of the black‑listed prefixes."""
+    return any(url.startswith(bad) for bad in blacklist)
+
+# ---------------------------------------------------------------------------
+# Core scraping logic
+# ---------------------------------------------------------------------------
 
 async def fetch_news(
     url: str,
@@ -81,265 +82,215 @@ async def fetch_news(
     api_token: str,
     schema: Type[BaseModel] = NewsItem,
     max_items: int = 10,
-    time_period: str = "last 24 hours"
+    time_period: str = "last 24 hours",
 ) -> List[Dict[str, Any]]:
-    """
-    Fetch news from a specific website using AI-powered extraction.
-    
-    Args:
-        url: The URL to scrape news from
-        base_url: The base URL for constructing complete URLs
-        provider: The LLM provider (e.g., "openai", "gemini", "deepseek")
-        api_token: The API token for the LLM provider
-        schema: Pydantic schema for the news items
-        max_items: Maximum number of items to fetch
-        time_period: Time period for news articles
-    
-    Returns:
-        List of news items as dictionaries
-    """
-    
-    # Load blacklist at the start of fetch_news
+    """Scrape one site and return a list of JSON‑serialisable news items."""
+
     blacklist = load_blacklist()
-    
-    # Enhanced LLM extraction strategy with improved prompt
+
+    # ---------------------------------------------------------------------
+    # Prompt for LLM‑based extraction
+    # ---------------------------------------------------------------------
+
     instruction = f"""
-    Extract sports news articles from the given webpage with these rules:
-    1. Look for anchor tags containing article links and extract their text content as headlines
-    2. The 'headline' field MUST contain the actual text of the news headline from the anchor tag or article title
-    3. For the 'href' field, extract ONLY the href attribute value from anchor tags (no base URL)
-    4. For the 'url' field, combine the base URL ({base_url}) with the 'href' value to form a complete URL
-    5. Set 'source' to the website domain name (e.g., 'nfl.com', 'espn.com')
-    6. For 'id', create a slug from the headline (lowercase, replace spaces with hyphens, no special chars)
-    7. For 'published_at', use the date from the article or current date in YYYY-MM-DD format
-    8. Only include articles from the {time_period}
-    9. Return at most {max_items} items
-    10. Focus on NFL news articles and ignore non-news content like ads or navigation links
-    11. Headlines should be complete, meaningful sentences or phrases, not just single words
-    
-    Pay special attention to elements with classes containing 'article', 'headline', 'news', etc.
-    Extract headlines from both anchor text and any nearby heading elements (h1, h2, h3) associated with the article.
+    Extract sports news articles from the given webpage and return JSON array matching this schema:
+    {schema.schema_json()}
+
+    Rules:
+      1. Collect anchor tags that link to articles – extract their visible text as *headline*.
+      2. *headline* must be complete, meaningful text – ignore nav links or single words.
+      3. Use the anchor's *href* for *href*; build *url* by prefixing {base_url} when *href* is relative.
+      4. Set *source* to the site domain (e.g. "nfl.com").
+      5. Build *id* (alias uniqueName) as a slug from *headline* (lowercase, hyphens, ascii only).
+      6. Put the article's publication date (or today) in YYYY‑MM‑DD in *published_at*.
+      7. Only include articles from the {time_period}.
+      8. Return **at most {max_items}** items.
+      9. Focus on NFL‑related content; skip ads, navigation, videos, etc.
     """
-    
-    is_github_actions = os.getenv("GITHUB_ACTIONS", "").lower() == "true"
-    
-    try:
-        # Use a longer timeout and more retries in GitHub Actions environment
-        timeout_ms = 60000 if is_github_actions else 30000  # 60 seconds for GitHub Actions
-        max_retries = 3 if is_github_actions else 1
-        
-        # Use a more forgiving strategy in GitHub Actions
-        wait_for_selector = (
-            "a[href*='/news'], a[href*='/story'], article, .article, "
-            "a[data-qa*='headline'], h1, h2"
-        )
-        
-        # Map the provider to the format expected by Crawl4AI
-        crawl4ai_provider = PROVIDER_MAP.get(provider, "openai")
-        model = MODEL_MAP.get(provider, "gpt-4o-mini")
-        
-        # Configure the LLM extraction strategy differently based on provider
-        strategy_params = {
-            "llm_provider": crawl4ai_provider,
-            "llm_api_token": api_token,
-            "cache_mode": CacheMode.DISABLED,
-            "schema": schema.schema_json(),
-            "extraction_type": "schemas",
-            "instruction": instruction,
-            "temperature": 0.2,
-            "model": model,
+
+    # ---------------------------------------------------------------------
+    # Environment‑specific parameters
+    # ---------------------------------------------------------------------
+
+    is_ci = os.getenv("GITHUB_ACTIONS", "").lower() == "true"
+    timeout_ms = 60_000 if is_ci else 30_000
+    max_retries = 3 if is_ci else 1
+
+    # **Unified** selector that waits until *any* likely headline element exists.
+    wait_for_selector = (
+        "a[href*='/news'], a[href*='/story'], article, .article, "
+        "a[data-qa*='headline'], h1, h2"
+    )
+
+    # ---------------------------------------------------------------------
+    # Build Crawl4AI extraction strategy
+    # ---------------------------------------------------------------------
+
+    crawl4ai_provider = PROVIDER_MAP.get(provider, "openai")
+    model = MODEL_MAP.get(provider, "gpt-4o-mini")
+
+    strategy_kwargs: Dict[str, Any] = {
+        "llm_provider": crawl4ai_provider,
+        "llm_api_token": api_token,
+        "cache_mode": CacheMode.DISABLED,
+        "schema": schema.schema_json(),
+        "extraction_type": "schemas",
+        "instruction": instruction,
+        "temperature": 0.2,
+        "model": model,
+    }
+
+    if provider == LLMSelector.DEEPSEEK:
+        # LiteLLM mapping for DeepSeek
+        os.environ.setdefault("DEEPSEEK_API_KEY", api_token)
+        os.environ["LITELLM_MODEL_ALIAS"] = f"{model}=deepseek/{model}"
+        strategy_kwargs["litellm_params"] = {
+            "model": f"deepseek/{model}",
+            "api_base": "https://api.deepseek.com/v1",
         }
-        
-        # Special handling for DeepSeek
-        if provider == LLMSelector.DEEPSEEK:
-            # Configure environment for LiteLLM to use DeepSeek
-            # These environment variables will be picked up by LiteLLM
-            os.environ["DEEPSEEK_API_KEY"] = api_token
-            os.environ["LITELLM_MODEL_ALIAS"] = f"{model}=deepseek/{model}"
-            
-            # Update parameters specific to DeepSeek
-            strategy_params.update({
-                "litellm_params": {
-                    "model": f"deepseek/{model}",
-                    "api_base": "https://api.deepseek.com/v1"
-                }
-            })
-            
-            logger.info(f"Using DeepSeek with model: {model} and specific configuration")
-        
-        # Create the strategy with the appropriate parameters
-        strategy = LLMExtractionStrategy(**strategy_params)
-        
-        logger.info(f"Using LLM provider: {provider} with model: {model}")
-        
-        result = None
-        retry_count = 0
-        
-        while retry_count <= max_retries:
-            try:
-                async with AsyncWebCrawler(verbose=False) as crawler:
-                    result = await crawler.arun(
-                        url=url,
-                        word_count_threshold=1,
-                        extraction_strategy=strategy,
-                        cache_mode=CacheMode.DISABLED,
-                        wait_for_selector=wait_for_selector,
-                        timeout=timeout_ms
-                    )
-                if result and result.extracted_content:
-                    break
-                retry_count += 1
-                if retry_count <= max_retries:
-                    logger.info(f"Retry {retry_count}/{max_retries} for {url}")
-                    await asyncio.sleep(2)  # Wait 2 seconds before retrying
-            except Exception as e:
-                logger.error(f"Error during crawling attempt {retry_count}: {e}")
-                retry_count += 1
-                if retry_count <= max_retries:
-                    logger.info(f"Retry {retry_count}/{max_retries} for {url}")
-                    await asyncio.sleep(2)
-        
-        # If we have no result after all retries or extraction failed
-        if result is None or result.extracted_content is None:
-            logger.error(f"Error: No content extracted from {url}")
-            return []
-        
-        # Handle potential encoding issues
+
+    strategy = LLMExtractionStrategy(**strategy_kwargs)
+
+    logger.info("Using LLM provider=%s model=%s", provider, model)
+
+    # ---------------------------------------------------------------------
+    # Crawl with retries
+    # ---------------------------------------------------------------------
+
+    result = None
+    for attempt in range(1, max_retries + 2):  # first run + retries
         try:
-            if isinstance(result.extracted_content, str):
-                decoded_content = result.extracted_content
-            else:
-                decoded_content = result.extracted_content.decode('utf-8', 'replace')
-        except Exception as e:
-            logger.error(f"Decoding error: {e}")
-            try:
-                decoded_content = result.extracted_content.encode('latin-1', 'replace').decode('utf-8', 'replace')
-            except:
-                # Last resort fallback
-                decoded_content = str(result.extracted_content)
-        
-        # Check again if decoded_content is None before parsing JSON
-        if not decoded_content:
-            logger.error(f"Error: Failed to decode content from {url}")
-            return []
-        
-        # Try to parse the JSON
-        try:
-            # Remove any leading/trailing non-JSON content
-            json_start = decoded_content.find('[')
-            json_end = decoded_content.rfind(']') + 1
-            
-            if json_start >= 0 and json_end > json_start:
-                json_content = decoded_content[json_start:json_end]
-                extracted_data = json.loads(json_content)
-            else:
-                # Try to parse the whole content as JSON
-                extracted_data = json.loads(decoded_content)
-                
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON parsing error: {e}")
-            logger.debug(f"Raw content: {decoded_content[:200]}...")  # First 200 chars for debugging
-            return []
-        
-        # Process the extracted data
-        if not extracted_data:
-            logger.warning(f"No data extracted from {url}")
-            return []
-            
-        if not isinstance(extracted_data, list):
-            logger.warning(f"Unexpected data format: {type(extracted_data)}")
-            # Try to convert to list if it's not already
-            if isinstance(extracted_data, dict):
-                extracted_data = [extracted_data]
-            else:
-                return []
-        
-        # Clean and process the data
-        cleaned_data = []
-        for item in extracted_data:
-            if not isinstance(item, dict):
-                continue
-                
-            # Skip items missing required fields or with empty headlines
-            if not all(key in item for key in ["headline", "href"]) or not item.get("headline"):
-                continue
-                
-            # Clean and normalize the headline
-            headline = item.get("headline", "").strip()
-            if not headline:
-                continue
-                
-            # Create the ID slug from the headline
-            item["id"] = re.sub(r'[^\w\-]', '', headline.lower().replace(" ", "-"))[:100]  # Limit length to 100 chars
-            
-            # Handle URL construction
-            href = item.get("href", "")
-            if href.startswith("http"):
-                item["url"] = href
-            else:
-                # Ensure the href starts with a slash if needed
-                if not href.startswith('/') and not base_url.endswith('/'):
-                    href = '/' + href
-                item["url"] = base_url + href
-            
-            # Clean URL
-            item["url"] = clean_url(item["url"])
-            
-            # Skip blacklisted URLs
-            if is_url_blacklisted(item["url"], blacklist):
-                logger.info(f"Skipping blacklisted URL: {item['url']}")
-                continue
-            
-            # Ensure isProcessed is set to False for new articles
-            item["isProcessed"] = False
-            
-            cleaned_data.append(item)
-        
-        return cleaned_data
-        
-    except Exception as e:
-        logger.error(f"Error during scraping {url}: {e}")
+            async with AsyncWebCrawler(verbose=False) as crawler:
+                result = await crawler.arun(
+                    url=url,
+                    word_count_threshold=1,
+                    extraction_strategy=strategy,
+                    cache_mode=CacheMode.DISABLED,
+                    wait_for_selector=wait_for_selector,
+                    timeout=timeout_ms,
+                )
+            if result and result.extracted_content:
+                break
+            logger.info("No content after attempt %d/%d for %s", attempt, max_retries + 1, url)
+        except Exception as exc:
+            logger.error("Error attempt %d/%d for %s: %s", attempt, max_retries + 1, url, exc)
+        await asyncio.sleep(2)
+
+    if not (result and result.extracted_content):
+        logger.error("Giving up – nothing extracted from %s", url)
         return []
 
+    # ---------------------------------------------------------------------
+    # Decode bytes → str
+    # ---------------------------------------------------------------------
+
+    extracted_raw: str
+    try:
+        extracted_raw = (
+            result.extracted_content
+            if isinstance(result.extracted_content, str)
+            else result.extracted_content.decode("utf-8", "replace")
+        )
+    except Exception as exc:
+        logger.error("Decoding error: %s", exc)
+        extracted_raw = str(result.extracted_content)
+
+    if not extracted_raw:
+        logger.error("Empty extraction from %s after decoding", url)
+        return []
+
+    # ---------------------------------------------------------------------
+    # Parse JSON block inside the raw string
+    # ---------------------------------------------------------------------
+
+    try:
+        start = extracted_raw.find("[")
+        end = extracted_raw.rfind("]") + 1
+        json_blob = extracted_raw[start:end] if start >= 0 and end > start else extracted_raw
+        data = json.loads(json_blob)
+    except json.JSONDecodeError as exc:
+        logger.error("JSON decode error from %s: %s", url, exc)
+        logger.debug("Raw content (first 400 chars): %s…", extracted_raw[:400])
+        return []
+
+    if not data:
+        logger.warning("Extractor returned an empty list for %s", url)
+        logger.debug("Full raw content (first 400 chars): %s…", extracted_raw[:400])
+        return []
+
+    if not isinstance(data, list):
+        data = [data] if isinstance(data, dict) else []
+
+    # ---------------------------------------------------------------------
+    # Post‑process & clean
+    # ---------------------------------------------------------------------
+
+    cleaned: List[Dict[str, Any]] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+
+        headline = item.get("headline", "").strip()
+        href = item.get("href", "")
+        if not headline or not href:
+            continue
+
+        # Build ID slug
+        slug = re.sub(r"[^\w-]", "", headline.lower().replace(" ", "-"))[:100]
+        full_url = href if href.startswith("http") else f"{base_url.rstrip('/')}/{href.lstrip('/')}"
+        clean_full_url = clean_url(full_url)
+
+        if is_url_blacklisted(clean_full_url, blacklist):
+            logger.debug("Skipping blacklisted URL %s", clean_full_url)
+            continue
+
+        cleaned.append(
+            {
+                "id": slug,
+                "source": item.get("source", ""),  # overwritten by caller
+                "headline": headline,
+                "href": href,
+                "url": clean_full_url,
+                "published_at": item.get("published_at", ""),
+                "isProcessed": False,
+            }
+        )
+
+    if not cleaned:
+        logger.debug("No valid articles after cleaning for %s. Raw extract (600 chars): %s…", url, extracted_raw[:600])
+
+    return cleaned
+
+# ---------------------------------------------------------------------------
+# Helper that queries several sources sequentially (kept unchanged)
+# ---------------------------------------------------------------------------
+
 async def fetch_from_all_sources(
-    sources: List[Dict[str, Any]], 
-    provider: str, 
-    api_token: str
+    sources: List[Dict[str, Any]],
+    provider: str,
+    api_token: str,
 ) -> List[Dict[str, Any]]:
-    """
-    Fetch news from all configured sources.
-    
-    Args:
-        sources: List of source configurations with name, url, and base_url
-        provider: LLM provider identifier
-        api_token: API token for the LLM provider
-        
-    Returns:
-        Combined list of all fetched news items
-    """
-    all_news_items = []
-    
+    """Fetch articles from all *enabled* sources and merge the results."""
+
+    all_items: List[Dict[str, Any]] = []
     for site in sources:
-        if site.get("execute", True):
-            try:
-                logger.info(f"Fetching news from {site['name']}")
-                news_items = await fetch_news(
-                    url=site["url"],
-                    base_url=site["base_url"],
-                    provider=provider,
-                    api_token=api_token
-                )
-                
-                if news_items:
-                    # Make sure source is set to the site name
-                    for item in news_items:
-                        item["source"] = site["name"]
-                    
-                    all_news_items.extend(news_items)
-                    logger.info(f"Scraped {len(news_items)} news items from {site['name']}")
-                else:
-                    logger.warning(f"No news items scraped from {site['name']}")
-            except Exception as e:
-                logger.error(f"Error scraping {site['name']}: {e}")
-    
-    return all_news_items
+        if not site.get("execute", True):
+            continue
+        try:
+            logger.info("Fetching news from %s", site["name"])
+            items = await fetch_news(
+                url=site["url"],
+                base_url=site["base_url"],
+                provider=provider,
+                api_token=api_token,
+            )
+            if items:
+                for art in items:
+                    art["source"] = site["name"]  # ensure correct source name
+                all_items.extend(items)
+                logger.info("Scraped %d items from %s", len(items), site["name"])
+            else:
+                logger.warning("No news items scraped from %s", site["name"])
+        except Exception as exc:
+            logger.error("Error scraping %s: %s", site["name"], exc)
+    return all_items
