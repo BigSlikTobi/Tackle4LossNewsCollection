@@ -129,7 +129,10 @@ async def fetch_news(
         max_retries = 3 if is_github_actions else 1
         
         # Use a more forgiving strategy in GitHub Actions
-        wait_for_selector = "body" if is_github_actions else "a[href*='/news/'], a[href*='/story/'], article, .article"
+        wait_for_selector = (
+            "a[href*='/news'], a[href*='/story'], article, .article, "
+            "a[data-qa*='headline'], h1, h2"
+        )
         
         # Map the provider to the format expected by Crawl4AI
         crawl4ai_provider = PROVIDER_MAP.get(provider, "openai")
