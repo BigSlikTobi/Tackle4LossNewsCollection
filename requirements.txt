@@ -2,7 +2,7 @@ crawl4ai==0.4.248
 nest_asyncio
 requests
 supabase>=2.13.0
-playwright
+playwright==1.51.1
 google-generativeai
 duckduckgo-search
 python-dotenv>=1.0.0
