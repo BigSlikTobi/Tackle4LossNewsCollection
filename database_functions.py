@@ -31,29 +31,6 @@ class SupabaseClient:
         """Get the source ID for a given source name."""
         return self.source_id_map.get(source_name.upper())
 
-    def post_new_source_article_to_supabase(self, article: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        try:
-            # Prepare the data with new fields
-            data = {
-                "uniqueName": article.get("id"),
-                "source": article.get("source"),
-                "headline": article.get("headline"),
-                "href": article.get("href"),
-                "url": article.get("url"),
-                "publishedAt": article.get("published_at"),
-                "isProcessed": False,
-                "summary": article.get("summary"),
-                "embedding": article.get("embedding")
-            }
-
-            # Insert into Supabase
-            result = self.client.table('NewsResults').insert(data).execute()
-            return result.data[0] if result.data else None
-
-        except Exception as e:
-            logging.error(f"Error posting to Supabase: {e}")
-            raise
-            
     def store_article_to_source_articles(self, article: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Store an article in the SourceArticles table.
