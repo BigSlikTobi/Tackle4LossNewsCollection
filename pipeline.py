@@ -126,6 +126,19 @@ class NewsFetchingPipeline:
     # ---------------------------------------------------------------------
 
     async def run(self) -> int:
+        """Coordinates the entire news fetching pipeline.
+
+        Workflow:
+        1. Validates essential environment variables (e.g., ``SUPABASE_URL``, ``SUPABASE_KEY``).
+        2. Loads news sources. Uses provided sources or falls back to default sources if none are given.
+        3. Fetches news items from these sources using a Language Model (LLM).
+        4. Formats the fetched news items into a standardized structure.
+        5. Stores the formatted news items in the database.
+
+        :return: ``0`` for successful execution, ``1`` for failure or premature exit due to errors
+                 (e.g., missing environment variables, no sources configured, no items fetched, or unhandled exceptions).
+        :rtype: int
+        """
         if not self._validate_env():
             return 1
 
