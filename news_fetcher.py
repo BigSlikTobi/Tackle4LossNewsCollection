@@ -411,7 +411,7 @@ async def fetch_from_all_sources(
     enabled_sources = [site for site in sources if site.get("execute", True)]
 
     if not enabled_sources:
-        logger.warning("no sources are marked for execution (execute=false)")
+        logger.warning("No sources are marked for execution (execute=false).")
         return []
 
     logger.info("Starting fetch for %d enabled sources using provider: %s", len(enabled_sources), provider)
