@@ -30,7 +30,7 @@ jobs:
         python -m playwright install --with-deps
        
     - name: Run team news collection pipeline
-      run: python teamPipeline.py
+      run: python team_pipeline.py
       env:
         GITHUB_ACTIONS: "true"
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
