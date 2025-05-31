@@ -642,3 +642,23 @@ LiteLLM completion() model= gpt-4o-mini; provider = openai
 2025-04-27 20:01:24,907 - ERROR - root:91 - Error posting to SourceArticles table: {'code': '23505', 'details': 'Key ("uniqueName")=(matthew-mcconaughey-celebrates-eagles-draft-pick-of-texas-s-andrew-mukuba) already exists.', 'hint': None, 'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"'}
 2025-04-27 20:01:24,909 - ERROR - root:110 - Failed to store article Matthew McConaughey celebrates Eagles' draft pick of Texas S Andrew Mukuba: {'code': '23505', 'details': 'Key ("uniqueName")=(matthew-mcconaughey-celebrates-eagles-draft-pick-of-texas-s-andrew-mukuba) already exists.', 'hint': None, 'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"'}
 2025-04-27 20:01:24,910 - INFO - __main__:179 - Stored 1 articles in SourceArticles
+2025-05-31 10:05:12,305 - ERROR - llm_selector:73 - API key not found for provider openai
+2025-05-31 10:05:12,648 - ERROR - llm_selector:102 - OpenAI API key not available
+2025-05-31 10:05:12,651 - ERROR - __main__:103 - Failed to initialise Supabase components – falling back to console mode
+Traceback (most recent call last):
+  File "/app/pipeline.py", line 99, in __init__
+    self.supabase_client = SupabaseClient()
+  File "/app/database_functions.py", line 15, in __init__
+    self.client = create_client(supabase_url, supabase_key)
+  File "/home/swebot/.local/lib/python3.10/site-packages/supabase/_sync/client.py", line 341, in create_client
+    return SyncClient.create(
+  File "/home/swebot/.local/lib/python3.10/site-packages/supabase/_sync/client.py", line 103, in create
+    client = cls(supabase_url, supabase_key, options)
+  File "/home/swebot/.local/lib/python3.10/site-packages/supabase/_sync/client.py", line 58, in __init__
+    raise SupabaseException("Invalid URL")
+supabase._sync.client.SupabaseException: Invalid URL
+2025-05-31 10:05:12,833 - INFO - db_operations:25 - Initialized DatabaseManager with console output mode (mock)
+2025-05-31 10:05:12,835 - INFO - __main__:107 - Pipeline uses LLM: {'provider': 'openai', 'model': 'gpt-4o-mini', 'api_key_available': False, 'client_initialized': False}
+2025-05-31 10:05:12,837 - INFO - source_manager:20 - Supabase URL from env: test_url
+2025-05-31 10:05:12,917 - ERROR - source_manager:54 - Error loading sources from Supabase: Request URL is missing an 'http://' or 'https://' protocol.
+2025-05-31 10:05:12,921 - ERROR - __main__:140 - No sources configured – aborting
