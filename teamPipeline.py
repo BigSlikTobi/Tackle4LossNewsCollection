@@ -124,8 +124,9 @@ class TeamNewsFetchingPipeline:
                     logger.warning(f"No source ID found for source name: {source_name}")
                     continue
                 
-                self.store_team_article(article, source_id)
-                stored_count += 1
+                result = self.store_team_article(article, source_id)
+                if result and result.get("id"):
+                    stored_count += 1
             except Exception as e:
                 logger.error(f"Failed to store team article {article.get('headline', 'Unknown')}: {e}")
         
