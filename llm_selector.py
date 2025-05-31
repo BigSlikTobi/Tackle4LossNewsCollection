@@ -6,7 +6,6 @@ import logging
 from typing import Dict, Any, Optional, Tuple, List
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class LLMSelector:
