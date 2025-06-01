@@ -3,34 +3,122 @@
  ## Purpose
  
 
- Tackle4Loss News Collection is designed to automatically gather and organize news articles related to the "Tackle4Loss" initiative. Its primary goal is to streamline the process of staying informed about a topic by collecting relevant information from a variety of online news sources. This eliminates the need for manual searching and ensures that downstream processes can utilize information in an up tp date state.
+ Tackle4Loss News Collection is designed to automatically gather, process, and organize news articles related to specific topics or teams, with a focus on the 'Tackle4Loss' initiative. It leverages Language Models (LLMs) to intelligently process fetched content and stores the curated information in a Supabase database. The project includes two main pipelines: a general news collection pipeline and a specialized pipeline for team-specific news, enabling targeted information gathering and analysis.
  
  ## Key Features
  
 
- *   **Automated News Aggregation**: The system automatically collects news articles from multiple news websites
- *   **Intelligent Filtering**: Articles are filtered using keywords and natural language processing techniques to ensure that only the most relevant content is included.
- *   **Centralized Storage**: Collected articles are stored in a structured format, making it easy to access, search, and analyze the information.
- *   **Customizable Configuration**: Users can configure the data sources, keywords, and filtering parameters to tailor the news collection process to their specific needs.
+ *   **Automated News Aggregation**: Gathers articles from a diverse set of online news sources and websites.
+ *   **LLM-Powered Content Processing**: Utilizes Language Models (e.g., OpenAI, Gemini) for tasks like summarizing or extracting key information from articles (though current implementation focuses on fetching based on source's provided content).
+ *   **Dual Pipeline System**: Offers a general news pipeline and a team-specific pipeline for flexible data collection.
+ *   **Centralized Storage**: Stores processed articles in a structured Supabase database, making them easily accessible for search and analysis.
+ *   **Configurable Sources and LLMs**: Allows users to define news sources and choose LLM providers through configuration.
+ *   **Automated Workflows**: Includes GitHub Actions for scheduled/automated execution of the collection pipelines.
+ *   **Logging**: Comprehensive logging for monitoring and troubleshooting pipeline execution.
+ *   **Blacklist Functionality**: Supports a `blacklist.json` file to exclude specific domains or URLs from the news fetching process.
 
- ## How to Use
- 
- Follow these steps to set up and use the Tackle4Loss News Collection tool:
- 
- 1.  **Install Dependencies**: Ensure that you have Python installed, along with the required libraries. You can install the dependencies using pip:
- 
+## Setup Instructions
 
-    ```bash
-    pip install -r requirements.txt
-    ```
- 
+Follow these steps to set up and run the Tackle4Loss News Collection tool:
 
- 3.  **Run the Script**: Execute the main script to start collecting and storing news articles.
+### 1. Prerequisites
+*   Python 3.8 or higher.
+*   `pip` (Python package installer).
 
-    ```python
-    # Example usage
-    python pipeline.py
-    ```
- 
- 4.  **Access the Data**: The collected articles will be stored in a designated directory or database. You can then analyze the data using your preferred tools.
- -+-+-+-+-+
+### 2. Clone the Repository
+   ```bash
+   git clone <repository_url> # Replace <repository_url> with the actual URL of this repository
+   cd <repository_name> # Replace <repository_name> with the directory created by git clone (usually the repo name)
+   ```
+
+### 3. Install Dependencies
+   Install the required Python libraries using `pip`:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### 4. Configure Environment Variables
+   This project uses environment variables for configuration. Create a file named `.env` in the root directory of the project and add the following variables:
+
+   ```env
+   # Supabase Configuration (Mandatory)
+   SUPABASE_URL="your_supabase_project_url"
+   SUPABASE_KEY="your_supabase_anon_key"
+
+   # LLM Configuration (Mandatory, choose at least one provider)
+   LLM_PROVIDER="openai" # Or "gemini", etc. Defaults to "openai" if not set.
+   OPENAI_API_KEY="your_openai_api_key" # Required if LLM_PROVIDER is "openai"
+   # GOOGLE_API_KEY="your_google_api_key" # Required if LLM_PROVIDER is "gemini"
+   # Add other provider-specific API keys as needed, based on llm_selector.py
+
+   # Logging Configuration (Optional)
+   LOG_LEVEL="INFO" # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL. Default: INFO
+   # LOG_DIR="logs" # Default: ./logs
+   # LOG_FILE="pipeline.log" # Default: pipeline.log (inside LOG_DIR)
+   ```
+
+   **Important:**
+   *   Replace placeholder values (e.g., `"your_supabase_project_url"`) with your actual credentials and configuration.
+   *   The `.env` file is included in `.gitignore` by default to prevent accidental sharing of sensitive keys.
+   *   The application loads these variables at startup using `python-dotenv`.
+
+## Running the Pipelines
+
+Once the setup is complete, you can run the news collection pipelines using the following commands from the project's root directory:
+
+### General News Pipeline
+This pipeline fetches general news articles based on the default sources configured in `source_manager.py`.
+```bash
+python pipeline.py
+```
+
+### Team-Specific News Pipeline
+This pipeline fetches news articles related to specific teams, as configured in `source_manager.py` (via `get_team_news_sources`).
+```bash
+python teamPipeline.py
+```
+
+### Automated Execution
+The project also includes GitHub Actions workflows defined in the `.github/workflows/` directory (e.g., `news_collection.yml`, `team-news-collection.yml`). These workflows can be configured to run the pipelines on a schedule or based on other triggers, automating the news collection process.
+
+## Module Structure
+
+The project is organized into several key modules:
+
+*   **`pipeline.py`**: Main script that orchestrates the general news collection pipeline. It handles initialization, source loading, fetching, processing, and storage of news articles.
+*   **`teamPipeline.py`**: Similar to `pipeline.py`, but specifically orchestrates the news collection pipeline for team-related news sources.
+*   **`news_fetcher.py`**: Contains the logic for fetching news content from various URLs and sources. It interacts with the LLM for initial processing if required by the source.
+*   **`source_manager.py`**: Responsible for managing and providing the configurations for news sources, for both general and team-specific pipelines.
+*   **`llm_selector.py`**: Manages the selection and initialization of Language Model (LLM) providers (e.g., OpenAI, Gemini). It also handles API key retrieval for the selected LLM.
+*   **`db_operations.py`**: Contains functions for interacting with the Supabase database, primarily for storing the fetched and processed articles.
+*   **`database_functions.py`**: Provides the Supabase client instance and related utility functions for database connection.
+*   **`utils.py`**: A collection of utility functions used across the project (e.g., URL cleaning, slug creation).
+*   **`requirements.txt`**: Lists all Python dependencies required for the project.
+*   **`logs/`**: The default directory where log files (e.g., `pipeline.log`) are stored.
+*   **`.github/workflows/`**: Contains YAML files defining GitHub Actions workflows for continuous integration and automated pipeline execution (e.g., `news_collection.yml`, `team-news-collection.yml`).
+*   **`.env` (example)**: A file (typically not committed to version control) that stores environment variables like API keys and database URLs.
+*   **`blacklist.json`**: A file used to list domains or URLs that should be excluded from news fetching.
+
+## High-Level Workflow
+
+The news collection pipelines generally follow these steps:
+
+1.  **Initialization**:
+    *   Logging is set up according to environment variables (`LOG_LEVEL`, `LOG_DIR`, `LOG_FILE`).
+    *   Environment variables are loaded from the `.env` file.
+2.  **Configuration Loading**:
+    *   Essential environment variables (like `SUPABASE_URL`, `SUPABASE_KEY`, and LLM API keys) are validated.
+    *   News sources are loaded via `source_manager.py` (either default sources for `pipeline.py` or team-specific sources for `teamPipeline.py`).
+3.  **Component Setup**:
+    *   The appropriate LLM provider is initialized using `llm_selector.py` based on the `LLM_PROVIDER` environment variable and its corresponding API key.
+    *   A connection to the Supabase database is established via `database_functions.py` and `db_operations.py`.
+4.  **News Fetching**:
+    *   `news_fetcher.py` iterates through the active sources.
+    *   For each source, it fetches potential news items/articles. This might involve directly accessing RSS feeds, scraping web pages, or using the LLM to identify relevant links on a page.
+5.  **Data Formatting**:
+    *   The fetched items are standardized into a common format, including fields like `uniqueName`, `source`, `headline`, `href`, `url`, and `publishedAt`.
+6.  **Storage**:
+    *   The formatted news items are stored in the Supabase database. `pipeline.py` typically uses the `SourceArticles` table, while `teamPipeline.py` uses the `TeamSourceArticles` table.
+7.  **Logging and Output**:
+    *   Throughout the process, detailed logs are generated.
+    *   The pipelines output summaries of their activity, such as the number of articles fetched and stored.
