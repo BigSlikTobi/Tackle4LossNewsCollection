@@ -70,7 +70,6 @@ load_dotenv()
 # ---------------------------------------------------------------------------
 from news_fetcher import fetch_from_all_sources  # noqa: E402
 from source_manager import get_default_sources  # noqa: E402
-from utils import clean_url, create_slug, extract_source_domain, format_href  # noqa: E402
 from llm_selector import LLMSelector  # noqa: E402
 from db_operations import DatabaseManager  # noqa: E402
 from database_functions import SupabaseClient  # noqa: E402
