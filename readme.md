@@ -1,9 +1,10 @@
  # Tackle4Loss News Collection
  
  ## Purpose
- 
 
- Tackle4Loss News Collection is designed to automatically gather, process, and organize news articles related to specific topics or teams, with a focus on the 'Tackle4Loss' initiative. It leverages Language Models (LLMs) to intelligently process fetched content and stores the curated information in a Supabase database. The project includes two main pipelines: a general news collection pipeline and a specialized pipeline for team-specific news, enabling targeted information gathering and analysis.
+Tackle4LossNewsCollection is **part 1** of the Tackle4Loss Projext that **gathers** extracts, enriches and publicates American Football News an Tackle4Loss.com.
+
+Tackle4Loss News Collection is designed to automatically gather, process, and organize news articles related to specific topics or teams, with a focus on the 'Tackle4Loss' initiative. It leverages Language Models (LLMs) to intelligently process fetched content and stores the curated information in a Supabase database. The project includes two main pipelines: a general news collection pipeline and a specialized pipeline for team-specific news, enabling targeted information gathering and analysis.
  
  ## Key Features
  
