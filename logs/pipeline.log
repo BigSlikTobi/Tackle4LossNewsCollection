@@ -662,3 +662,595 @@ supabase._sync.client.SupabaseException: Invalid URL
 2025-05-31 10:05:12,837 - INFO - source_manager:20 - Supabase URL from env: test_url
 2025-05-31 10:05:12,917 - ERROR - source_manager:54 - Error loading sources from Supabase: Request URL is missing an 'http://' or 'https://' protocol.
 2025-05-31 10:05:12,921 - ERROR - __main__:140 - No sources configured – aborting
+2025-06-09 13:24:17,232 - INFO - llm_selector:99 - OpenAI client initialized successfully
+2025-06-09 13:24:17,625 - INFO - httpx:1038 - HTTP Request: GET https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/NewsSource?select=id%2CName "HTTP/2 200 OK"
+2025-06-09 13:24:17,632 - INFO - root:25 - Loaded source IDs: {'BLEACHERREPORT': 3, 'NFL': 1, 'ESPN': 2, 'FOXSPORTS': 4}
+2025-06-09 13:24:17,634 - INFO - db_operations:23 - Initialized DatabaseManager with Supabase client
+2025-06-09 13:24:17,636 - INFO - __main__:101 - Supabase client and DB manager ready
+2025-06-09 13:24:17,637 - INFO - __main__:107 - Pipeline uses LLM: {'provider': 'openai', 'model': 'gpt-4o-mini', 'api_key_available': True, 'client_initialized': True}
+2025-06-09 13:24:17,817 - INFO - httpx:1786 - HTTP Request: GET https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/NewsSource?select=%2A&isExecute=eq.true "HTTP/1.1 200 OK"
+2025-06-09 13:24:17,824 - INFO - source_manager:48 - Successfully loaded 4 sources from Supabase
+2025-06-09 13:24:17,827 - INFO - news_fetcher:417 - Starting fetch for 4 enabled sources using provider: openai
+2025-06-09 13:24:17,829 - INFO - news_fetcher:440 - Fetching news from BLEACHERREPORT (https://bleacherreport.com/nfl)
+2025-06-09 13:24:17,830 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:24:17,837 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://bleacherreport.com/nfl
+2025-06-09 13:24:17,843 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://bleacherreport.com/nfl
+2025-06-09 13:24:18,723 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 1 for https://bleacherreport.com/nfl: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:19,077 - INFO - news_fetcher:215 - Waiting 2 seconds before retry for https://bleacherreport.com/nfl
+2025-06-09 13:24:21,079 - INFO - news_fetcher:181 - Starting crawl attempt 2/2 for https://bleacherreport.com/nfl
+2025-06-09 13:24:21,241 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 2 for https://bleacherreport.com/nfl: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:21,564 - ERROR - news_fetcher:219 - Giving up – nothing extracted from https://bleacherreport.com/nfl after 2 attempts
+2025-06-09 13:24:21,565 - INFO - news_fetcher:440 - Fetching news from NFL (https://www.nfl.com/news)
+2025-06-09 13:24:21,566 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:24:21,566 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://www.nfl.com/news
+2025-06-09 13:24:21,567 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://www.nfl.com/news
+2025-06-09 13:24:21,689 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 1 for https://www.nfl.com/news: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:21,990 - INFO - news_fetcher:215 - Waiting 2 seconds before retry for https://www.nfl.com/news
+2025-06-09 13:24:23,992 - INFO - news_fetcher:181 - Starting crawl attempt 2/2 for https://www.nfl.com/news
+2025-06-09 13:24:24,157 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 2 for https://www.nfl.com/news: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:24,494 - ERROR - news_fetcher:219 - Giving up – nothing extracted from https://www.nfl.com/news after 2 attempts
+2025-06-09 13:24:24,494 - INFO - news_fetcher:440 - Fetching news from ESPN (https://www.espn.com/nfl)
+2025-06-09 13:24:24,495 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:24:24,496 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://www.espn.com/nfl
+2025-06-09 13:24:24,496 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://www.espn.com/nfl
+2025-06-09 13:24:24,621 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 1 for https://www.espn.com/nfl: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:24,922 - INFO - news_fetcher:215 - Waiting 2 seconds before retry for https://www.espn.com/nfl
+2025-06-09 13:24:26,924 - INFO - news_fetcher:181 - Starting crawl attempt 2/2 for https://www.espn.com/nfl
+2025-06-09 13:24:27,090 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 2 for https://www.espn.com/nfl: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:27,422 - ERROR - news_fetcher:219 - Giving up – nothing extracted from https://www.espn.com/nfl after 2 attempts
+2025-06-09 13:24:27,422 - INFO - news_fetcher:440 - Fetching news from FOXSPORTS (https://www.foxsports.com/stories/nfl)
+2025-06-09 13:24:27,423 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:24:27,424 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://www.foxsports.com/stories/nfl
+2025-06-09 13:24:27,424 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://www.foxsports.com/stories/nfl
+2025-06-09 13:24:27,546 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 1 for https://www.foxsports.com/stories/nfl: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:27,849 - INFO - news_fetcher:215 - Waiting 2 seconds before retry for https://www.foxsports.com/stories/nfl
+2025-06-09 13:24:29,851 - INFO - news_fetcher:181 - Starting crawl attempt 2/2 for https://www.foxsports.com/stories/nfl
+2025-06-09 13:24:30,017 - ERROR - news_fetcher:210 - Explicit error during crawler.arun attempt 2 for https://www.foxsports.com/stories/nfl: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Traceback (most recent call last):
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/news_fetcher.py", line 184, in fetch_news
+    async with AsyncWebCrawler(verbose=True) as crawler: # Set verbose=True
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 241, in __aenter__
+    return await self.start()
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_webcrawler.py", line 225, in start
+    await self.crawler_strategy.__aenter__()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 887, in __aenter__
+    await self.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 897, in start
+    await self.browser_manager.start()
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py", line 402, in start
+    self.browser = await self.playwright.chromium.launch(**browser_args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 14450, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 96, in launch
+    Browser, from_channel(await self._channel.send("launch", params))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/Users/tobiaslatta/Projects/github/bigsliktobi/Tackle4LossNewsCollection/venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/tobiaslatta/Library/Caches/ms-playwright/chromium-1161/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+2025-06-09 13:24:30,348 - ERROR - news_fetcher:219 - Giving up – nothing extracted from https://www.foxsports.com/stories/nfl after 2 attempts
+2025-06-09 13:24:30,348 - WARNING - news_fetcher:474 - No news items returned from fetch_news for BLEACHERREPORT
+2025-06-09 13:24:30,349 - WARNING - news_fetcher:474 - No news items returned from fetch_news for NFL
+2025-06-09 13:24:30,349 - WARNING - news_fetcher:474 - No news items returned from fetch_news for ESPN
+2025-06-09 13:24:30,349 - WARNING - news_fetcher:474 - No news items returned from fetch_news for FOXSPORTS
+2025-06-09 13:24:30,350 - INFO - news_fetcher:477 - Finished fetching from all sources. Total items collected: 0
+2025-06-09 13:24:30,350 - WARNING - __main__:167 - No news items fetched – pipeline ends early
+2025-06-09 13:25:16,451 - INFO - llm_selector:99 - OpenAI client initialized successfully
+2025-06-09 13:25:16,612 - INFO - httpx:1038 - HTTP Request: GET https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/NewsSource?select=id%2CName "HTTP/2 200 OK"
+2025-06-09 13:25:16,616 - INFO - root:25 - Loaded source IDs: {'BLEACHERREPORT': 3, 'NFL': 1, 'ESPN': 2, 'FOXSPORTS': 4}
+2025-06-09 13:25:16,617 - INFO - db_operations:23 - Initialized DatabaseManager with Supabase client
+2025-06-09 13:25:16,618 - INFO - __main__:101 - Supabase client and DB manager ready
+2025-06-09 13:25:16,618 - INFO - __main__:107 - Pipeline uses LLM: {'provider': 'openai', 'model': 'gpt-4o-mini', 'api_key_available': True, 'client_initialized': True}
+2025-06-09 13:25:16,773 - INFO - httpx:1786 - HTTP Request: GET https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/NewsSource?select=%2A&isExecute=eq.true "HTTP/1.1 200 OK"
+2025-06-09 13:25:16,777 - INFO - source_manager:48 - Successfully loaded 4 sources from Supabase
+2025-06-09 13:25:16,780 - INFO - news_fetcher:417 - Starting fetch for 4 enabled sources using provider: openai
+2025-06-09 13:25:16,781 - INFO - news_fetcher:440 - Fetching news from BLEACHERREPORT (https://bleacherreport.com/nfl)
+2025-06-09 13:25:16,783 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:25:16,793 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://bleacherreport.com/nfl
+2025-06-09 13:25:16,794 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://bleacherreport.com/nfl
+2025-06-09 13:25:22,083 - INFO - httpx:1038 - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2025-06-09 13:25:22,904 - INFO - LiteLLM:3108 - 
+LiteLLM completion() model= gpt-4o-mini; provider = openai
+2025-06-09 13:25:41,082 - INFO - httpx:1038 - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-09 13:25:41,095 - INFO - LiteLLM:1185 - Wrapper: Completed Call, calling success_handler
+2025-06-09 13:25:41,097 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:25:41,097 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:25:41,101 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:25:41,173 - INFO - news_fetcher:196 - Crawl attempt 1 for https://bleacherreport.com/nfl finished. Result has content: True
+2025-06-09 13:25:41,174 - INFO - news_fetcher:396 - Successfully extracted and cleaned 6 items from https://bleacherreport.com/nfl
+2025-06-09 13:25:41,175 - INFO - news_fetcher:440 - Fetching news from NFL (https://www.nfl.com/news)
+2025-06-09 13:25:41,175 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:25:41,176 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://www.nfl.com/news
+2025-06-09 13:25:41,176 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://www.nfl.com/news
+2025-06-09 13:25:43,398 - INFO - LiteLLM:3108 - 
+LiteLLM completion() model= gpt-4o-mini; provider = openai
+2025-06-09 13:26:01,462 - INFO - httpx:1038 - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-09 13:26:01,467 - INFO - LiteLLM:1185 - Wrapper: Completed Call, calling success_handler
+2025-06-09 13:26:01,469 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:01,470 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:01,473 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:01,553 - INFO - news_fetcher:196 - Crawl attempt 1 for https://www.nfl.com/news finished. Result has content: True
+2025-06-09 13:26:01,554 - INFO - news_fetcher:396 - Successfully extracted and cleaned 6 items from https://www.nfl.com/news
+2025-06-09 13:26:01,554 - INFO - news_fetcher:440 - Fetching news from ESPN (https://www.espn.com/nfl)
+2025-06-09 13:26:01,555 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:26:01,556 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://www.espn.com/nfl
+2025-06-09 13:26:01,556 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://www.espn.com/nfl
+2025-06-09 13:26:03,534 - INFO - LiteLLM:3108 - 
+LiteLLM completion() model= gpt-4o-mini; provider = openai
+2025-06-09 13:26:25,559 - INFO - httpx:1038 - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-09 13:26:25,566 - INFO - LiteLLM:1185 - Wrapper: Completed Call, calling success_handler
+2025-06-09 13:26:25,568 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:25,568 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:25,572 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:25,653 - INFO - news_fetcher:196 - Crawl attempt 1 for https://www.espn.com/nfl finished. Result has content: True
+2025-06-09 13:26:25,654 - INFO - news_fetcher:396 - Successfully extracted and cleaned 8 items from https://www.espn.com/nfl
+2025-06-09 13:26:25,655 - INFO - news_fetcher:440 - Fetching news from FOXSPORTS (https://www.foxsports.com/stories/nfl)
+2025-06-09 13:26:25,655 - INFO - news_fetcher:101 - Using API Token for crawl4ai (Provider: openai): sk-pr...-fgA
+2025-06-09 13:26:25,656 - INFO - news_fetcher:173 - Using LLM provider=openai model=gpt-4o-mini for URL: https://www.foxsports.com/stories/nfl
+2025-06-09 13:26:25,656 - INFO - news_fetcher:181 - Starting crawl attempt 1/2 for https://www.foxsports.com/stories/nfl
+2025-06-09 13:26:27,691 - INFO - LiteLLM:3108 - 
+LiteLLM completion() model= gpt-4o-mini; provider = openai
+2025-06-09 13:26:27,692 - INFO - LiteLLM:3108 - 
+LiteLLM completion() model= gpt-4o-mini; provider = openai
+2025-06-09 13:26:29,595 - INFO - httpx:1038 - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-09 13:26:29,604 - INFO - LiteLLM:1185 - Wrapper: Completed Call, calling success_handler
+2025-06-09 13:26:29,606 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:29,606 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:29,610 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:49,898 - INFO - httpx:1038 - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-09 13:26:49,901 - INFO - LiteLLM:1185 - Wrapper: Completed Call, calling success_handler
+2025-06-09 13:26:49,902 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:49,904 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:49,906 - INFO - LiteLLM:636 - selected model name for cost calculation: openai/gpt-4o-mini-2024-07-18
+2025-06-09 13:26:49,992 - INFO - news_fetcher:196 - Crawl attempt 1 for https://www.foxsports.com/stories/nfl finished. Result has content: True
+2025-06-09 13:26:49,993 - INFO - news_fetcher:396 - Successfully extracted and cleaned 9 items from https://www.foxsports.com/stories/nfl
+2025-06-09 13:26:49,993 - INFO - news_fetcher:467 - Successfully scraped 6 raw items from BLEACHERREPORT
+2025-06-09 13:26:49,994 - INFO - news_fetcher:467 - Successfully scraped 6 raw items from NFL
+2025-06-09 13:26:49,994 - INFO - news_fetcher:467 - Successfully scraped 8 raw items from ESPN
+2025-06-09 13:26:49,994 - INFO - news_fetcher:467 - Successfully scraped 9 raw items from FOXSPORTS
+2025-06-09 13:26:49,995 - INFO - news_fetcher:477 - Finished fetching from all sources. Total items collected: 29
+2025-06-09 13:26:49,995 - INFO - __main__:170 - Fetched 29 news items
+2025-06-09 13:26:50,350 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:50,356 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/articles/25203526-falcons-kirk-cousins-trade-market-reportedly-dry-after-aaron-rodgers-join-steelers) already exists.'}
+2025-06-09 13:26:50,360 - ERROR - root:87 - Failed to store article Lions' Underrated X-Factor 🗣️: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/articles/25203526-falcons-kirk-cousins-trade-market-reportedly-dry-after-aaron-rodgers-join-steelers) already exists.'}
+2025-06-09 13:26:50,432 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:50,433 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(kirk-trade-market-dry) already exists.'}
+2025-06-09 13:26:50,434 - ERROR - root:87 - Failed to store article Kirk Trade Market ‘Dry’: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(kirk-trade-market-dry) already exists.'}
+2025-06-09 13:26:50,506 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 201 Created"
+2025-06-09 13:26:50,509 - INFO - root:64 - Successfully stored article in SourceArticles: CJGJ Feels Highly Disrespected
+2025-06-09 13:26:50,612 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 201 Created"
+2025-06-09 13:26:50,613 - INFO - root:64 - Successfully stored article in SourceArticles: Texans Expected to Sign Chubb
+2025-06-09 13:26:50,677 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:50,678 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(ramsey-to-skip-minicamp) already exists.'}
+2025-06-09 13:26:50,679 - ERROR - root:87 - Failed to store article Ramsey to Skip Minicamp: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(ramsey-to-skip-minicamp) already exists.'}
+2025-06-09 13:26:50,740 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:50,741 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(vikings-eye-3-year-sb-window) already exists.'}
+2025-06-09 13:26:50,742 - ERROR - root:87 - Failed to store article Vikings Eye 3-Year SB Window: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(vikings-eye-3-year-sb-window) already exists.'}
+2025-06-09 13:26:50,800 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 201 Created"
+2025-06-09 13:26:50,801 - INFO - root:64 - Successfully stored article in SourceArticles: Raiders to use safety Jeremy Chinn as a versatile chess piece
+2025-06-09 13:26:50,860 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 201 Created"
+2025-06-09 13:26:50,861 - INFO - root:64 - Successfully stored article in SourceArticles: Texans' C.J. Gardner-Johnson feels 'highly disrespected' by Eagles trading him
+2025-06-09 13:26:50,915 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 201 Created"
+2025-06-09 13:26:50,916 - INFO - root:64 - Successfully stored article in SourceArticles: Texans expected to sign former Browns RB Nick Chubb
+2025-06-09 13:26:50,979 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:50,979 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(rams-lb-jared-verse-thinks-he-left-around-10-sacks-on-the-field-in-rookie-year-thats-not-happening-n) already exists.'}
+2025-06-09 13:26:50,980 - ERROR - root:87 - Failed to store article Rams LB Jared Verse thinks he left 'around 10 sacks on the field' in rookie year: 'That's not happening no more': {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(rams-lb-jared-verse-thinks-he-left-around-10-sacks-on-the-field-in-rookie-year-thats-not-happening-n) already exists.'}
+2025-06-09 13:26:51,051 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,052 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(nfl-news-roundup-dolphins-cb-jalen-ramsey-not-planning-on-attending-mandatory-minicamp-as-sides-cont) already exists.'}
+2025-06-09 13:26:51,053 - ERROR - root:87 - Failed to store article NFL news roundup: Dolphins CB Jalen Ramsey not planning on attending mandatory minicamp as sides continue to work toward trade: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(nfl-news-roundup-dolphins-cb-jalen-ramsey-not-planning-on-attending-mandatory-minicamp-as-sides-cont) already exists.'}
+2025-06-09 13:26:51,108 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,108 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(broncos-qb-bo-nix-feels-a-lot-better-understanding-denvers-offense-heading-into-year-2) already exists.'}
+2025-06-09 13:26:51,109 - ERROR - root:87 - Failed to store article Broncos QB Bo Nix feels 'a lot better' understanding Denver's offense heading into Year 2: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(broncos-qb-bo-nix-feels-a-lot-better-understanding-denvers-offense-heading-into-year-2) already exists.'}
+2025-06-09 13:26:51,193 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 201 Created"
+2025-06-09 13:26:51,194 - INFO - root:64 - Successfully stored article in SourceArticles: Sources: RB Chubb expected to sign with Texans
+2025-06-09 13:26:51,251 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,252 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(sources-rodgers-with-steelers-inks-13m-deal) already exists.'}
+2025-06-09 13:26:51,253 - ERROR - root:87 - Failed to store article Sources: Rodgers with Steelers, inks $13M+ deal: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(sources-rodgers-with-steelers-inks-13m-deal) already exists.'}
+2025-06-09 13:26:51,330 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,331 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/nfl/story/_/id/45470414/former-nfl-db-adam-pacman-jones-arrested-cincinnati) already exists.'}
+2025-06-09 13:26:51,332 - ERROR - root:87 - Failed to store article Ex-DB 'Pacman' Jones arrested near Cincinnati: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/nfl/story/_/id/45470414/former-nfl-db-adam-pacman-jones-arrested-cincinnati) already exists.'}
+2025-06-09 13:26:51,395 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,395 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(sandler-to-cast-ravens-henry-if-he-rushes-for-2k) already exists.'}
+2025-06-09 13:26:51,396 - ERROR - root:87 - Failed to store article Sandler to cast Ravens' Henry if he rushes for 2K: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(sandler-to-cast-ravens-henry-if-he-rushes-for-2k) already exists.'}
+2025-06-09 13:26:51,461 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,462 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(veteran-wr-conley-retires-to-attend-film-school) already exists.'}
+2025-06-09 13:26:51,463 - ERROR - root:87 - Failed to store article Veteran WR Conley retires to attend film school: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(veteran-wr-conley-retires-to-attend-film-school) already exists.'}
+2025-06-09 13:26:51,513 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,515 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(ex-nfl-cb-joseph-facing-charges-after-fatal-crash) already exists.'}
+2025-06-09 13:26:51,515 - ERROR - root:87 - Failed to store article Ex-NFL CB Joseph facing charges after fatal crash: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(ex-nfl-cb-joseph-facing-charges-after-fatal-crash) already exists.'}
+2025-06-09 13:26:51,581 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,582 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/nfl/story/_/id/45464143/tom-rafferty-former-cowboys-ol-1976-89-dies-70) already exists.'}
+2025-06-09 13:26:51,582 - ERROR - root:87 - Failed to store article Rafferty, Super Bowl champ with Cowboys, dies: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/nfl/story/_/id/45464143/tom-rafferty-former-cowboys-ol-1976-89-dies-70) already exists.'}
+2025-06-09 13:26:51,642 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,643 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(qb-wilson-a-mentor-for-all-giants-not-just-dart) already exists.'}
+2025-06-09 13:26:51,644 - ERROR - root:87 - Failed to store article QB Wilson a mentor for all Giants, not just Dart: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(qb-wilson-a-mentor-for-all-giants-not-just-dart) already exists.'}
+2025-06-09 13:26:51,703 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,704 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl) already exists.'}
+2025-06-09 13:26:51,704 - ERROR - root:87 - Failed to store article NFL: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl) already exists.'}
+2025-06-09 13:26:51,779 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,780 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl/aaron-rodgers-free-agent-signing-pittsburgh-steelers) already exists.'}
+2025-06-09 13:26:51,780 - ERROR - root:87 - Failed to store article Aaron Rodgers officially signs with Steelers, contract details revealed: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl/aaron-rodgers-free-agent-signing-pittsburgh-steelers) already exists.'}
+2025-06-09 13:26:51,831 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,832 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(aaron-rodgers-was-reportedly-third-on-steelers-qb-wish-list-this-offseason) already exists.'}
+2025-06-09 13:26:51,832 - ERROR - root:87 - Failed to store article Aaron Rodgers was reportedly third on Steelers' QB wish list this offseason: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(aaron-rodgers-was-reportedly-third-on-steelers-qb-wish-list-this-offseason) already exists.'}
+2025-06-09 13:26:51,884 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,885 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl/adam-sandlers-next-film-could-feature-derrick-henry-he-hits-2000-yards) already exists.'}
+2025-06-09 13:26:51,885 - ERROR - root:87 - Failed to store article Adam Sandler promises Derrick Henry movie role if he hits 2,000 rushing yards: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl/adam-sandlers-next-film-could-feature-derrick-henry-he-hits-2000-yards) already exists.'}
+2025-06-09 13:26:51,937 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:51,938 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-giants-game-by-game-predictions-all-gasps-no-breaks-and-lots-of-pain) already exists.'}
+2025-06-09 13:26:51,938 - ERROR - root:87 - Failed to store article 2025 Giants game-by-game predictions: All gasps, no breaks … and lots of pain: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-giants-game-by-game-predictions-all-gasps-no-breaks-and-lots-of-pain) already exists.'}
+2025-06-09 13:26:52,005 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:52,006 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-steelers-game-by-game-predictions-will-aaron-rodgers-make-the-difference) already exists.'}
+2025-06-09 13:26:52,006 - ERROR - root:87 - Failed to store article 2025 Steelers game-by-game predictions: Will Aaron Rodgers make the difference?: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-steelers-game-by-game-predictions-will-aaron-rodgers-make-the-difference) already exists.'}
+2025-06-09 13:26:52,060 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:52,061 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-bears-game-by-game-predictions-playoffs-in-year-1-under-ben-johnson) already exists.'}
+2025-06-09 13:26:52,062 - ERROR - root:87 - Failed to store article 2025 Bears game-by-game predictions: Playoffs in Year 1 under Ben Johnson?: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-bears-game-by-game-predictions-playoffs-in-year-1-under-ben-johnson) already exists.'}
+2025-06-09 13:26:52,114 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:52,115 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-vikings-game-by-game-predictions-will-jj-mccarthy-prove-to-be-right-qb-move) already exists.'}
+2025-06-09 13:26:52,115 - ERROR - root:87 - Failed to store article 2025 Vikings game-by-game predictions: Will J.J. McCarthy prove to be right QB move?: {'message': 'duplicate key value violates unique constraint "SourceArticles_uniqueName_key"', 'code': '23505', 'hint': None, 'details': 'Key ("uniqueName")=(2025-vikings-game-by-game-predictions-will-jj-mccarthy-prove-to-be-right-qb-move) already exists.'}
+2025-06-09 13:26:52,173 - INFO - httpx:1038 - HTTP Request: POST https://yqtiuzhedkfacwgormhn.supabase.co/rest/v1/SourceArticles "HTTP/2 409 Conflict"
+2025-06-09 13:26:52,174 - ERROR - root:68 - Error posting to SourceArticles table: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl/2025-nfl-free-agency-tracker-signings-updates-best-players-available) already exists.'}
+2025-06-09 13:26:52,174 - ERROR - root:87 - Failed to store article 2025 NFL free agency tracker: Texans expected to sign RB Nick Chubb: {'message': 'duplicate key value violates unique constraint "SourceArticles_href_key"', 'code': '23505', 'hint': None, 'details': 'Key (href)=(/stories/nfl/2025-nfl-free-agency-tracker-signings-updates-best-players-available) already exists.'}
+2025-06-09 13:26:52,175 - INFO - __main__:192 - Stored 6 articles in SourceArticles

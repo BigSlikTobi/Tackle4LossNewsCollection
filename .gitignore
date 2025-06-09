@@ -12,6 +12,8 @@ venv/
 .vscode/
 .idea/
 
-# Log files
+# Logs
 *.log
-logs
+logs/
+logs/pipeline.log
+

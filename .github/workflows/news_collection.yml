@@ -2,8 +2,8 @@ name: News Collection Pipeline
 
 on:
   schedule:
-    # Run every 15 minutes
-    - cron: '*/15 * * * *'
+    # Run every hour at the 15th minute
+    - cron: '15 * * * *'
   # Allow manual triggering too
   workflow_dispatch:
 
