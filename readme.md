@@ -1,4 +1,6 @@
  # Tackle4Loss News Collection
+
+[![CI/CD Pipeline](https://github.com/bigsliktobi/Tackle4LossNewsCollection/actions/workflows/ci.yml/badge.svg)](https://github.com/bigsliktobi/Tackle4LossNewsCollection/actions/workflows/ci.yml)
  
  ## Purpose
 

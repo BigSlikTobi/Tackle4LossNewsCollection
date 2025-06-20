@@ -21,8 +21,18 @@ def build_url_from_parts(parts: urllib.parse.ParseResult) -> str:
     netloc = parts.netloc.strip()
     path_segments = [segment.strip() for segment in parts.path.split('/') if segment.strip()]
     path = '/' + '/'.join(path_segments) if path_segments else ''
-    query_params = [param.strip() for param in parts.query.split('&') if param.strip()]
-    query = '&'.join(query_params)
+
+    query_params_list = [param.strip() for param in parts.query.split('&') if param.strip()]
+    processed_query_params = []
+    for param_group in query_params_list:
+        if '=' in param_group:
+            key, value = param_group.split('=', 1)
+            processed_query_params.append(f"{key.strip()}={value.strip()}")
+        else:
+            # Handle parameters without values, e.g., 'flag' in 'query?flag'
+            processed_query_params.append(param_group.strip())
+    query = '&'.join(processed_query_params)
+
     fragment = parts.fragment.strip()
     return urllib.parse.urlunparse((scheme, netloc, path, parts.params, query, fragment))
 
@@ -62,7 +72,9 @@ def clean_url(url: str) -> str:
             logger.warning(f"Error cleaning URL {url}: {e}")
             return url
     
-    final_url = urllib.parse.quote(url, safe=":/?&=%#")
+    # Allow ':', '?', '=', '&' to be percent-encoded by removing them from the safe set.
+    # Retain '/', '%', '#' as safe.
+    final_url = urllib.parse.quote(url, safe="/%#")
     return final_url
 
 def is_valid_url(url: str) -> bool:
