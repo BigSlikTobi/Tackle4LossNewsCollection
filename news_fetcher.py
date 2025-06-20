@@ -162,7 +162,7 @@ async def fetch_news(
         # LiteLLM mapping for DeepSeek
         # Ensure Deepseek key is set if used - check llm_selector.py logic too
         os.environ.setdefault("DEEPSEEK_API_KEY", api_token or "") # Pass token if available
-        os.environ["LITELLM_MODEL_ALIAS"] = f"{model}=deepseek/{model}"
+        os.environ.setdefault("LITELLM_MODEL_ALIAS", f"{model}=deepseek/{model}")
         strategy_kwargs["litellm_params"] = {
             "model": f"deepseek/{model}",
             "api_base": "https://api.deepseek.com/v1",
@@ -325,9 +325,16 @@ async def fetch_news(
              logger.debug("Skipping item with missing href for %s: %s", url, item)
              continue
 
-        # Build ID slug - more robust slug generation
-        slug_base = re.sub(r'[^\w\s-]', '', headline.lower()) # Keep spaces temporarily
-        slug = re.sub(r'[-\s]+', '-', slug_base).strip('-')[:100] # Replace spaces/multiple hyphens
+        # Build ID slug - use LLM-provided id if available, otherwise generate from headline
+        llm_id = item.get("id", "").strip()
+        if llm_id:
+            # Use the LLM-provided ID as base for slug
+            slug_base = re.sub(r'[^\w\s-]', '', llm_id.lower())
+            slug = re.sub(r'[-\s]+', '-', slug_base).strip('-')[:100]
+        else:
+            # Generate slug from headline if no ID provided
+            slug_base = re.sub(r'[^\w\s-]', '', headline.lower()) # Keep spaces temporarily
+            slug = re.sub(r'[-\s]+', '-', slug_base).strip('-')[:100] # Replace spaces/multiple hyphens
         if not slug: # Handle cases where headline was only special chars
              slug = f"article-{hash(headline)}"[:100]
              logger.warning("Generated hash-based slug for headline: %s", headline)
@@ -356,7 +363,15 @@ async def fetch_news(
              continue # Skip if URL processing fails
 
 
-        # Check blacklist
+        # Check blacklist - check both the LLM-provided URL and the constructed URL
+        llm_provided_url = item.get("url", "").strip()
+        
+        # Check blacklist against LLM-provided URL first
+        if llm_provided_url and is_url_blacklisted(llm_provided_url, blacklist):
+            logger.debug("Skipping blacklisted URL %s (from LLM output)", llm_provided_url)
+            continue
+            
+        # Also check the constructed URL
         if is_url_blacklisted(clean_full_url, blacklist):
             logger.debug("Skipping blacklisted URL %s (original href: %s)", clean_full_url, href)
             continue

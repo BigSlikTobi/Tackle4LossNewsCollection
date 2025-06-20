@@ -570,7 +570,7 @@ class TestFetchFromAllSources:
 
 
     async def test_fetch_all_one_source_fails(self, mock_sources_list, caplog):
-        caplog.set_level(logging.WARNING) # To see "No news items returned" or error logs
+        caplog.set_level(logging.INFO) # To see "Successfully scraped" info logs and error logs
 
         async def mock_fetch_news_side_effect(url, base_url, provider, api_token, **kwargs):
             if url == "http://s1.com":

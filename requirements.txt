@@ -8,6 +8,8 @@ google-generativeai
 duckduckgo-search
 python-dotenv>=1.0.0
 pytest
+pytest-asyncio
+anthropic
 openai
 PyYAML
 httpx>=0.25.0

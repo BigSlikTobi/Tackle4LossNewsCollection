@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.13
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run tests
+      run: |
+        python -m pytest -v
+      env:
+        OPENAI_API_KEY: test_key_for_ci
+        GOOGLE_API_KEY: test_key_for_ci
+        ANTHROPIC_API_KEY: test_key_for_ci
+        DEEPSEEK_API_KEY: test_key_for_ci
+        SUPABASE_URL: https://test.supabase.co
+        SUPABASE_KEY: test_key_for_ci
+
+    - name: Build Docker image
+      run: |
+        docker build -t tackle4loss-news-collection:${{ github.ref_name }} .
+        docker tag tackle4loss-news-collection:${{ github.ref_name }} tackle4loss-news-collection:latest
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## Changes in ${{ github.ref_name }}
+          
+          ### Features
+          - Automated news collection and processing
+          - Multi-LLM provider support (OpenAI, Gemini, Anthropic, DeepSeek)
+          - Supabase database integration
+          - Comprehensive test suite
+          
+          ### Docker Usage
+          ```bash
+          docker run -e OPENAI_API_KEY=your_key \
+                     -e SUPABASE_URL=your_url \
+                     -e SUPABASE_KEY=your_key \
+                     tackle4loss-news-collection:${{ github.ref_name }}
+          ```
+          
+          Full changelog: https://github.com/${{ github.repository }}/compare/v1.0.0...${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
