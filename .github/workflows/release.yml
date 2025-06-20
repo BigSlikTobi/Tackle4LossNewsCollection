@@ -41,7 +41,7 @@ jobs:
         docker tag tackle4loss-news-collection:${{ github.ref_name }} tackle4loss-news-collection:latest
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
