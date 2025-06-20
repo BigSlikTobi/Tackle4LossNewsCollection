@@ -1,5 +1,5 @@
 crawl4ai==0.4.248
-litellm==1.67.2
+litellm==1.72.7
 nest_asyncio
 requests
 supabase>=2.13.0
