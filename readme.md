@@ -4,14 +4,13 @@
 
 Tackle4LossNewsCollection is **part 1** of the Tackle4Loss Projext that **gathers** extracts, enriches and publicates American Football News an Tackle4Loss.com.
 
-Tackle4Loss News Collection is designed to automatically gather, process, and organize news articles related to specific topics or teams, with a focus on the 'Tackle4Loss' initiative. It leverages Language Models (LLMs) to intelligently process fetched content and stores the curated information in a Supabase database. The project includes two main pipelines: a general news collection pipeline and a specialized pipeline for team-specific news, enabling targeted information gathering and analysis.
+Tackle4Loss News Collection is designed to automatically gather, process, and organize news articles related to specific topics or teams, with a focus on the 'Tackle4Loss' initiative. It leverages Language Models (LLMs) to intelligently process fetched content and stores the curated information in a Supabase database. The project includes a general news collection pipeline, enabling targeted information gathering and analysis.
  
  ## Key Features
  
 
  *   **Automated News Aggregation**: Gathers articles from a diverse set of online news sources and websites.
  *   **LLM-Powered Content Processing**: Utilizes Language Models (e.g., OpenAI, Gemini) for tasks like summarizing or extracting key information from articles (though current implementation focuses on fetching based on source's provided content).
- *   **Dual Pipeline System**: Offers a general news pipeline and a team-specific pipeline for flexible data collection.
  *   **Centralized Storage**: Stores processed articles in a structured Supabase database, making them easily accessible for search and analysis.
  *   **Configurable Sources and LLMs**: Allows users to define news sources and choose LLM providers through configuration.
  *   **Automated Workflows**: Includes GitHub Actions for scheduled/automated execution of the collection pipelines.
@@ -73,23 +72,16 @@ This pipeline fetches general news articles based on the default sources configu
 python pipeline.py
 ```
 
-### Team-Specific News Pipeline
-This pipeline fetches news articles related to specific teams, as configured in `source_manager.py` (via `get_team_news_sources`).
-```bash
-python teamPipeline.py
-```
-
 ### Automated Execution
-The project also includes GitHub Actions workflows defined in the `.github/workflows/` directory (e.g., `news_collection.yml`, `team-news-collection.yml`). These workflows can be configured to run the pipelines on a schedule or based on other triggers, automating the news collection process.
+The project also includes GitHub Actions workflows defined in the `.github/workflows/` directory (e.g., `news_collection.yml`). These workflows can be configured to run the pipeline on a schedule or based on other triggers, automating the news collection process.
 
 ## Module Structure
 
 The project is organized into several key modules:
 
 *   **`pipeline.py`**: Main script that orchestrates the general news collection pipeline. It handles initialization, source loading, fetching, processing, and storage of news articles.
-*   **`teamPipeline.py`**: Similar to `pipeline.py`, but specifically orchestrates the news collection pipeline for team-related news sources.
 *   **`news_fetcher.py`**: Contains the logic for fetching news content from various URLs and sources. It interacts with the LLM for initial processing if required by the source.
-*   **`source_manager.py`**: Responsible for managing and providing the configurations for news sources, for both general and team-specific pipelines.
+*   **`source_manager.py`**: Responsible for managing and providing the configurations for news sources.
 *   **`llm_selector.py`**: Manages the selection and initialization of Language Model (LLM) providers (e.g., OpenAI, Gemini). It also handles API key retrieval for the selected LLM.
 *   **`db_operations.py`**: Contains functions for interacting with the Supabase database, primarily for storing the fetched and processed articles.
 *   **`database_functions.py`**: Provides the Supabase client instance and related utility functions for database connection.
@@ -100,6 +92,9 @@ The project is organized into several key modules:
 *   **`.env` (example)**: A file (typically not committed to version control) that stores environment variables like API keys and database URLs.
 *   **`blacklist.json`**: A file used to list domains or URLs that should be excluded from news fetching.
 
+## Changelog
+- Removed `teamPipeline.py` (team-specific pipeline) as it was deprecated and no longer supported.
+
 ## High-Level Workflow
 
 The news collection pipelines generally follow these steps:
@@ -109,7 +104,7 @@ The news collection pipelines generally follow these steps:
     *   Environment variables are loaded from the `.env` file.
 2.  **Configuration Loading**:
     *   Essential environment variables (like `SUPABASE_URL`, `SUPABASE_KEY`, and LLM API keys) are validated.
-    *   News sources are loaded via `source_manager.py` (either default sources for `pipeline.py` or team-specific sources for `teamPipeline.py`).
+    *   News sources are loaded via `source_manager.py`.
 3.  **Component Setup**:
     *   The appropriate LLM provider is initialized using `llm_selector.py` based on the `LLM_PROVIDER` environment variable and its corresponding API key.
     *   A connection to the Supabase database is established via `database_functions.py` and `db_operations.py`.
@@ -119,7 +114,7 @@ The news collection pipelines generally follow these steps:
 5.  **Data Formatting**:
     *   The fetched items are standardized into a common format, including fields like `uniqueName`, `source`, `headline`, `href`, `url`, and `publishedAt`.
 6.  **Storage**:
-    *   The formatted news items are stored in the Supabase database. `pipeline.py` typically uses the `SourceArticles` table, while `teamPipeline.py` uses the `TeamSourceArticles` table.
+    *   The formatted news items are stored in the Supabase database using the `SourceArticles` table.
 7.  **Logging and Output**:
     *   Throughout the process, detailed logs are generated.
     *   The pipelines output summaries of their activity, such as the number of articles fetched and stored.
