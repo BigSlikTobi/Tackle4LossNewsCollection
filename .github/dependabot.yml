@@ -1,22 +1,25 @@
 version: 2
 updates:
-  # Enable security updates for Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
-    security-updates-only: true
+    open-pull-requests-limit: 0
+    allow:
+      - dependency-type: "security-updates"
 
-  # Enable security updates for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    security-updates-only: true
+    open-pull-requests-limit: 0
+    allow:
+      - dependency-type: "security-updates"
 
-  # Enable security updates for Docker
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
-    security-updates-only: true
+    open-pull-requests-limit: 0
+    allow:
+      - dependency-type: "security-updates"
