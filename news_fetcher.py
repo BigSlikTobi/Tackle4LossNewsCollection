@@ -1,3 +1,4 @@
+import hashlib
 import asyncio
 import json
 import os
@@ -336,7 +337,8 @@ async def fetch_news(
             slug_base = re.sub(r'[^\w\s-]', '', headline.lower()) # Keep spaces temporarily
             slug = re.sub(r'[-\s]+', '-', slug_base).strip('-')[:100] # Replace spaces/multiple hyphens
         if not slug: # Handle cases where headline was only special chars
-             slug = f"article-{hash(headline)}"[:100]
+             slug_digest = hashlib.sha1(headline.encode('utf-8')).hexdigest()
+             slug = f"article-{slug_digest[:8]}"
              logger.warning("Generated hash-based slug for headline: %s", headline)
 
         # Ensure slug uniqueness within this batch
