@@ -29,8 +29,8 @@ Follow these steps to set up and run the Tackle4Loss News Collection tool:
 
 ### 2. Clone the Repository
    ```bash
-   git clone <repository_url> # Replace <repository_url> with the actual URL of this repository
-   cd <repository_name> # Replace <repository_name> with the directory created by git clone (usually the repo name)
+   git clone https://github.com/BigSlikTobi/Tackle4LossNewsCollection.git 
+   cd Tackle4LossNewsCollection
    ```
 
 ### 3. Install Dependencies
@@ -93,9 +93,6 @@ The project is organized into several key modules:
 *   **`.github/workflows/`**: Contains YAML files defining GitHub Actions workflows for continuous integration and automated pipeline execution (e.g., `news_collection.yml`, `team-news-collection.yml`).
 *   **`.env` (example)**: A file (typically not committed to version control) that stores environment variables like API keys and database URLs.
 *   **`blacklist.json`**: A file used to list domains or URLs that should be excluded from news fetching.
-
-## Changelog
-- Removed `teamPipeline.py` (team-specific pipeline) as it was deprecated and no longer supported.
 
 ## High-Level Workflow
 
