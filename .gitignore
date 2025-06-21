@@ -15,5 +15,4 @@ venv/
 # Logs
 *.log
 logs/
-logs/pipeline.log
 
