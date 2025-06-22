@@ -72,10 +72,7 @@ def clean_url(url: str) -> str:
             logger.warning(f"Error cleaning URL {url}: {e}")
             return url
     
-    # Allow ':', '?', '=', '&' to be percent-encoded by removing them from the safe set.
-    # Retain '/', '%', '#' as safe.
-    final_url = urllib.parse.quote(url, safe="/%#")
-    return final_url
+    return url
 
 def is_valid_url(url: str) -> bool:
     """Validate if a URL is properly formatted."""
