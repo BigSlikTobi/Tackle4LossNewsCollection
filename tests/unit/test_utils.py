@@ -55,19 +55,19 @@ def test_build_url_from_parts_empty_path_query_fragment():
 # Tests for clean_url
 def test_clean_url_simple(monkeypatch):
     monkeypatch.setenv("GITHUB_ACTIONS", "false")
-    assert clean_url("http://example.com/path") == "http%3A//example.com/path"
+    assert clean_url("http://example.com/path") == "http://example.com/path"
 
 def test_clean_url_with_spaces_local_env(monkeypatch):
     monkeypatch.setenv("GITHUB_ACTIONS", "false")
-    assert clean_url("http://example.com/path with spaces") == "http%3A//example.com/path-with-spaces"
+    assert clean_url("http://example.com/path with spaces") == "http://example.com/path-with-spaces"
 
 def test_clean_url_with_control_chars_local_env(url_with_control_chars_safe, monkeypatch):
     monkeypatch.setenv("GITHUB_ACTIONS", "false")
-    assert clean_url(url_with_control_chars_safe) == "http%3A//example.com/pathwithcontrolchars"
+    assert clean_url(url_with_control_chars_safe) == "http://example.com/pathwithcontrolchars"
 
 def test_clean_url_with_control_chars_gha_env(url_with_control_chars_safe, monkeypatch):
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
-    assert clean_url(url_with_control_chars_safe) == "http%3A//example.com/pathwithcontrolchars"
+    assert clean_url(url_with_control_chars_safe) == "http://example.com/pathwithcontrolchars"
 
 def test_clean_url_empty(monkeypatch):
     monkeypatch.setenv("GITHUB_ACTIONS", "false")
@@ -75,15 +75,15 @@ def test_clean_url_empty(monkeypatch):
 
 def test_clean_url_with_query_params_local_env(monkeypatch):
     monkeypatch.setenv("GITHUB_ACTIONS", "false")
-    assert clean_url("http://example.com/search?q=test query&cat=news") == "http%3A//example.com/search%3Fq%3Dtest-query%26cat%3Dnews"
+    assert clean_url("http://example.com/search?q=test query&cat=news") == "http://example.com/search?q=test-query&cat=news"
 
 def test_clean_url_with_fragment_local_env(monkeypatch): # CORRECTED
     monkeypatch.setenv("GITHUB_ACTIONS", "false")
-    assert clean_url("http://example.com/page#section 1") == "http%3A//example.com/page#section-1"
+    assert clean_url("http://example.com/page#section 1") == "http://example.com/page#section-1"
 
 def test_clean_url_already_partially_encoded_local_env(monkeypatch):
     monkeypatch.setenv("GITHUB_ACTIONS", "false")
-    assert clean_url("http://example.com/path%20with%25spaces") == "http%3A//example.com/path%2520with%2525spaces"
+    assert clean_url("http://example.com/path%20with%25spaces") == "http://example.com/path%2520with%2525spaces"
 
 # Tests for is_valid_url
 @pytest.mark.parametrize("url, expected", [
