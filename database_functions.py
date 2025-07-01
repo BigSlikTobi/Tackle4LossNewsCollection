@@ -1,7 +1,6 @@
 import os
 import logging
 from supabase import create_client, Client  # Import Client
-from urllib.parse import urlparse
 from typing import Dict, Any, Optional, List
 
 logging.basicConfig(level=logging.INFO)
