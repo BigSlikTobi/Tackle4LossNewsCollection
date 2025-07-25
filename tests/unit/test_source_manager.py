@@ -31,7 +31,7 @@ EXPECTED_TEAM_NEWS_SOURCES_FORMATTED = [
 
 
 @pytest.fixture(autouse=True)
-def manage_supabase_env_vars(monkeypatch): #
+def manage_supabase_env_vars(monkeypatch):
     """Fixture to set and clean up Supabase environment variables for tests.
     This ensures that the tests can run without needing to set these variables manually.
     Args:
