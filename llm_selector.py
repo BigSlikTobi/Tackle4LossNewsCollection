@@ -242,12 +242,8 @@ class LLMSelector:
         If the provider or task type is not recognized, it returns an empty string.
         Args:
             task_type: Type of task ("chat")
-        If the provider is not recognized, it returns an empty string.
-        If the task type is not recognized, it returns an empty string.
         Returns:
             Model name for the specified task
-        If the provider is not recognized, it returns an empty string.
-        If the task type is not recognized, it returns an empty string.     
         """
         if self.provider in self.DEFAULT_MODELS and task_type in self.DEFAULT_MODELS[self.provider]:
             return self.DEFAULT_MODELS[self.provider][task_type]
