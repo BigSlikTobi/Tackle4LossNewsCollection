@@ -17,7 +17,14 @@ class SupabaseClient:
         self._load_source_ids()
 
     def _load_source_ids(self) -> None:
-        """Load source IDs from the NewsSource table."""
+        """
+        Load source IDs from the NewsSource table.
+        This method populates the source_id_map with source names as keys and their corresponding IDs as values.
+        Args:
+            None
+        Returns:
+            None
+        """
         try:
             result = self.client.table('NewsSource').select('id,Name').execute()
             if result.data:
@@ -28,16 +35,23 @@ class SupabaseClient:
             raise
 
     def get_source_id(self, source_name: str) -> Optional[int]:
-        """Get the source ID for a given source name."""
+        """
+        Get the source ID for a given source name.
+        This method retrieves the numeric ID for a news source based on its name.
+        Args:
+            source_name: The name of the news source
+        Returns:
+        The numeric ID of the source if found, None otherwise
+        """
         return self.source_id_map.get(source_name.upper())
 
     def store_article_to_source_articles(self, article: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Store an article in the SourceArticles table.
-        
+        This method takes an article dictionary, retrieves the corresponding source ID,
+        and inserts the article data into the SourceArticles table.
         Args:
-            article: Article data dictionary
-            
+            article: Article data dictionary    
         Returns:
             The stored article data if successful, None otherwise
         """
@@ -71,10 +85,10 @@ class SupabaseClient:
     def store_articles_to_source_articles(self, articles: List[Dict[str, Any]]) -> int:
         """
         Store multiple articles in the SourceArticles table.
-        
+        This method iterates over a list of article dictionaries and stores each one in the SourceArticles table.
+        It returns the number of articles successfully stored.
         Args:
-            articles: List of article data dictionaries
-            
+            articles: List of article data dictionaries     
         Returns:
             Number of articles successfully stored
         """

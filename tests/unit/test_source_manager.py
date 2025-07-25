@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 import logging # Added for caplog.set_level
 
 # Module to test
-from source_manager import get_default_sources, get_team_news_sources
+from source_manager import get_default_sources
 
 MOCK_SUPABASE_URL = "http://mock.supabase.co"
 MOCK_SUPABASE_KEY = "mock_supabase_key"
@@ -31,17 +31,29 @@ EXPECTED_TEAM_NEWS_SOURCES_FORMATTED = [
 
 
 @pytest.fixture(autouse=True)
-def manage_supabase_env_vars(monkeypatch): # Renamed to avoid conflict if imported elsewhere
-    # Set required env vars for most tests; specific tests can override/clear
+def manage_supabase_env_vars(monkeypatch):
+    """Fixture to set and clean up Supabase environment variables for tests.
+    This ensures that the tests can run without needing to set these variables manually.
+    Args:
+        monkeypatch: pytest fixture to modify environment variables.
+    Returns:
+        None
+    """
     monkeypatch.setenv("SUPABASE_URL", MOCK_SUPABASE_URL)
     monkeypatch.setenv("SUPABASE_KEY", MOCK_SUPABASE_KEY)
     yield
     # Monkeypatch automatically undoes its changes
 
-
 @pytest.mark.asyncio
 class TestGetDefaultSources:
     async def test_success_fetches_and_transforms_data(self, caplog):
+        """Test that get_default_sources fetches data from Supabase and transforms it correctly.
+        This verifies that the function can successfully retrieve and format news sources.
+        Args:
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.INFO)
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 200
@@ -62,6 +74,13 @@ class TestGetDefaultSources:
             assert f"Successfully loaded {len(EXPECTED_DEFAULT_SOURCES_FORMATTED)} sources from Supabase" in caplog.text
 
     async def test_empty_list_from_api(self, caplog):
+        """Test that get_default_sources handles an empty list from Supabase.
+        This verifies that the function can gracefully handle cases where no sources are returned.
+        Args:
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.INFO)
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 200
@@ -76,6 +95,14 @@ class TestGetDefaultSources:
             assert "Successfully loaded 0 sources from Supabase" in caplog.text
 
     async def test_missing_supabase_credentials_logs_error_returns_empty(self, monkeypatch, caplog):
+        """Test that get_default_sources logs an error and returns an empty list if Supabase credentials are missing.
+        This verifies that the function handles missing environment variables correctly.
+        Args:
+            monkeypatch: pytest fixture to modify environment variables.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.ERROR)
         monkeypatch.delenv("SUPABASE_URL", raising=False)
         monkeypatch.delenv("SUPABASE_KEY", raising=False)
@@ -88,6 +115,13 @@ class TestGetDefaultSources:
             mock_httpx_constructor.assert_not_called()
 
     async def test_httpx_http_status_error_logs_and_returns_empty(self, caplog):
+        """Test that get_default_sources logs an error and returns an empty list on HTTP status errors.
+        This verifies that the function handles HTTP errors gracefully and logs appropriate messages.
+        Args:
+            caplog: pytest fixture to capture log messages.       
+        Returns:        
+            None
+        """
         caplog.set_level(logging.ERROR)
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 401 # Unauthorized
@@ -108,6 +142,13 @@ class TestGetDefaultSources:
             assert "Error loading sources from Supabase: Client Error" in caplog.text # Message from HTTPStatusError
 
     async def test_httpx_request_error_logs_and_returns_empty(self, caplog):
+        """Test that get_default_sources logs an error and returns an empty list on request errors.
+        This verifies that the function handles network-related errors gracefully.
+        Args:
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.ERROR)
         mock_async_client = AsyncMock(spec=httpx.AsyncClient)
         mock_async_client.__aenter__.return_value.get.side_effect = httpx.RequestError(
@@ -119,79 +160,3 @@ class TestGetDefaultSources:
             assert sources == []
             assert "Error loading sources from Supabase: Network Error" in caplog.text
 
-
-@pytest.mark.asyncio
-class TestGetTeamNewsSources:
-    async def test_success_fetches_and_transforms_data(self, caplog):
-        caplog.set_level(logging.INFO)
-        mock_response = MagicMock(spec=httpx.Response)
-        mock_response.status_code = 200
-        mock_response.json.return_value = SAMPLE_TEAM_NEWS_SOURCE_RAW
-
-        mock_async_client = AsyncMock(spec=httpx.AsyncClient)
-        mock_async_client.__aenter__.return_value.get.return_value = mock_response
-
-        with patch('httpx.AsyncClient', return_value=mock_async_client) as mock_httpx_constructor:
-            sources = await get_team_news_sources()
-            assert sources == EXPECTED_TEAM_NEWS_SOURCES_FORMATTED
-            mock_httpx_constructor.assert_called_once()
-            mock_async_client.__aenter__.return_value.get.assert_called_once_with(
-                f"{MOCK_SUPABASE_URL}/rest/v1/TeamNewsSource",
-                headers={"apikey": MOCK_SUPABASE_KEY, "Authorization": f"Bearer {MOCK_SUPABASE_KEY}"},
-                params={"select": "*", "isExecute": "eq.true"}
-            )
-            assert f"Successfully loaded {len(EXPECTED_TEAM_NEWS_SOURCES_FORMATTED)} team news sources from Supabase" in caplog.text
-
-    async def test_empty_list_from_api_team_sources(self, caplog): # Renamed for clarity
-        caplog.set_level(logging.INFO)
-        mock_response = MagicMock(spec=httpx.Response)
-        mock_response.status_code = 200
-        mock_response.json.return_value = []
-
-        mock_async_client = AsyncMock(spec=httpx.AsyncClient)
-        mock_async_client.__aenter__.return_value.get.return_value = mock_response
-
-        with patch('httpx.AsyncClient', return_value=mock_async_client):
-            sources = await get_team_news_sources()
-            assert sources == []
-            assert "Successfully loaded 0 team news sources from Supabase" in caplog.text
-
-    async def test_missing_supabase_credentials_team_sources(self, monkeypatch, caplog): # Renamed
-        caplog.set_level(logging.ERROR)
-        monkeypatch.delenv("SUPABASE_URL", raising=False)
-
-        with patch('httpx.AsyncClient') as mock_httpx_constructor:
-            sources = await get_team_news_sources()
-            assert sources == []
-            assert "Supabase credentials not found in environment variables" in caplog.text
-            mock_httpx_constructor.assert_not_called()
-
-    async def test_httpx_http_status_error_team_sources(self, caplog): # Renamed
-        caplog.set_level(logging.ERROR)
-        mock_response = MagicMock(spec=httpx.Response)
-        mock_response.status_code = 500 # Server Error
-        mock_response.request = MagicMock(spec=httpx.Request)
-        mock_response.request.url = f"{MOCK_SUPABASE_URL}/rest/v1/TeamNewsSource"
-        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "Server Error", request=mock_response.request, response=mock_response
-        )
-
-        mock_async_client = AsyncMock(spec=httpx.AsyncClient)
-        mock_async_client.__aenter__.return_value.get.return_value = mock_response
-
-        with patch('httpx.AsyncClient', return_value=mock_async_client):
-            sources = await get_team_news_sources()
-            assert sources == []
-            assert "Error loading team news sources from Supabase: Server Error" in caplog.text
-
-    async def test_httpx_request_error_team_sources(self, caplog): # Renamed
-        caplog.set_level(logging.ERROR)
-        mock_async_client = AsyncMock(spec=httpx.AsyncClient)
-        mock_async_client.__aenter__.return_value.get.side_effect = httpx.ConnectError(
-            "Connection Failed", request=MagicMock(spec=httpx.Request)
-        )
-
-        with patch('httpx.AsyncClient', return_value=mock_async_client):
-            sources = await get_team_news_sources()
-            assert sources == []
-            assert "Error loading team news sources from Supabase: Connection Failed" in caplog.text

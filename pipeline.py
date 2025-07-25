@@ -19,11 +19,15 @@ from dotenv import load_dotenv
 
 def setup_logging() -> None:
     """Configure console **and** file logging.
-
     Configuration via environment variables (all optional):
     * ``LOG_LEVEL`` – ``DEBUG`` | ``INFO`` | ``WARNING`` | ``ERROR`` | ``CRITICAL`` (default: ``INFO``)
     * ``LOG_DIR``   – directory for log files (default: ``./logs``)
     * ``LOG_FILE``  – filename   (default: ``pipeline.log`` inside *LOG_DIR*)
+    This function sets up logging to both the console and a file.
+    Args:
+        None
+    Returns:
+        None    
     """
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
@@ -80,8 +84,18 @@ from database_functions import SupabaseClient  # noqa: E402
 
 
 class NewsFetchingPipeline:
-    """Coordinates the news fetching pipeline."""
-
+    """Coordinates the news fetching pipeline.
+    This class orchestrates the entire process of fetching news articles from various sources,
+    formatting them, and storing them in a database.
+    Args:
+        sources: Optional list of sources to fetch news from. If not provided, it will use the default sources defined 
+        in the source manager.
+        llm_provider: Optional LLM provider to use (e.g., "openai", "gemini", etc.). If not provided, 
+        it defaults to the environment variable LLM_PROVIDER.
+        llm_model: Optional LLM model to use. If not provided, it defaults to the environment variable LLM_MODEL.
+    Returns:
+        None
+    """
     def __init__(
         self,
         sources: Optional[List[Dict[str, Any]]] = None,
@@ -111,7 +125,17 @@ class NewsFetchingPipeline:
 
     @staticmethod
     def _validate_env() -> bool:
-        """Return *True* when all mandatory environment variables are present."""
+        """Return *True* when all mandatory environment variables are present.
+        This method checks for the presence of essential environment variables required for the pipeline to run.
+        It checks for the following variables:
+        * ``SUPABASE_URL`` – URL for the Supabase instance
+        * ``SUPABASE_KEY`` – API key for the Supabase instance
+        If any of these variables are missing, it logs an error message and returns *False*.
+        Args:
+            None
+        Returns:
+            True if all required environment variables are set, False otherwise
+        """
         required = ("SUPABASE_URL", "SUPABASE_KEY")
         missing = [var for var in required if not os.getenv(var)]
         if missing:
