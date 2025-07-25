@@ -33,6 +33,9 @@ def clear_supabase_env_vars():
         elif var in os.environ: # If test set it but it was originally absent
             del os.environ[var]
 
+"""These Tests cover the SupabaseClient initialization and methods.
+They ensure that the client can be initialized with environment variables,
+loads source IDs correctly, and handles various scenarios for storing articles."""
 
 @pytest.fixture
 def mock_supabase_lib_client():
@@ -42,6 +45,14 @@ def mock_supabase_lib_client():
 
 class TestSupabaseClientInitialization:
     def test_init_success_with_env_vars(self, monkeypatch, mock_supabase_lib_client):
+        """Test successful initialization of SupabaseClient with environment variables.
+            This verifies that the client can be created with valid SUPABASE_URL and SUPABASE_KEY.
+            Args:   
+                monkeypatch: pytest fixture to set environment variables.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+            Returns:
+                None
+        """
         monkeypatch.setenv("SUPABASE_URL", MOCK_SUPABASE_URL)
         monkeypatch.setenv("SUPABASE_KEY", MOCK_SUPABASE_KEY)
 
@@ -55,6 +66,14 @@ class TestSupabaseClientInitialization:
             mock_load_ids.assert_called_once()
 
     def test_init_missing_env_vars_raises_error(self):
+        """Test that SupabaseClient raises an error if environment variables are missing.
+            This verifies that the client initialization fails with a clear error message
+            when either SUPABASE_URL or SUPABASE_KEY is not set.
+            Args:
+                None
+            Returns:
+                None
+        """
         # SUPABASE_URL missing
         with patch.dict(os.environ, {"SUPABASE_KEY": MOCK_SUPABASE_KEY}, clear=True):
             with pytest.raises(EnvironmentError, match="Supabase credentials are not set"):
@@ -67,8 +86,16 @@ class TestSupabaseClientInitialization:
         with pytest.raises(EnvironmentError, match="Supabase credentials are not set"):
             SupabaseClient()
 
-
     def test_load_source_ids_success(self, monkeypatch, mock_supabase_lib_client):
+        """Test that SupabaseClient loads source IDs correctly from the database.
+            This verifies that the client can fetch source IDs and names from the NewsSource table
+            and populate the source_id_map attribute.
+            Args:
+                monkeypatch: pytest fixture to set environment variables.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+            Returns:
+                None
+        """
         monkeypatch.setenv("SUPABASE_URL", MOCK_SUPABASE_URL)
         monkeypatch.setenv("SUPABASE_KEY", MOCK_SUPABASE_KEY)
 
@@ -86,7 +113,17 @@ class TestSupabaseClientInitialization:
             mock_supabase_lib_client.table.assert_called_with('NewsSource')
             mock_supabase_lib_client.table.return_value.select.assert_called_with('id,Name')
 
-    def test_load_source_ids_no_data_in_response(self, monkeypatch, mock_supabase_lib_client, caplog): # Renamed
+    def test_load_source_ids_no_data_in_response(self, monkeypatch, mock_supabase_lib_client, caplog):
+        """Test that SupabaseClient handles empty response data gracefully.
+            This verifies that if the NewsSource table returns an empty list,
+            the source_id_map remains empty and no error is logged.
+            Args:
+                monkeypatch: pytest fixture to set environment variables.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         monkeypatch.setenv("SUPABASE_URL", MOCK_SUPABASE_URL)
         monkeypatch.setenv("SUPABASE_KEY", MOCK_SUPABASE_KEY)
 
@@ -100,6 +137,16 @@ class TestSupabaseClientInitialization:
             # No error should be logged for an empty list, it's a valid state.
 
     def test_load_source_ids_response_data_is_none(self, monkeypatch, mock_supabase_lib_client, caplog):
+        """Test that SupabaseClient handles None response data gracefully.
+            This verifies that if the NewsSource table returns None for data,
+            the source_id_map remains empty and no error is logged.
+            Args:
+                monkeypatch: pytest fixture to set environment variables.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         monkeypatch.setenv("SUPABASE_URL", MOCK_SUPABASE_URL)
         monkeypatch.setenv("SUPABASE_KEY", MOCK_SUPABASE_KEY)
 
@@ -120,8 +167,17 @@ class TestSupabaseClientInitialization:
             # The code's `if result.data:` will be true for `mock_response` itself, not `mock_response.data`.
             # It should be `if result and result.data:`. Let's assume the test passes for now.
 
-
     def test_load_source_ids_api_exception(self, monkeypatch, mock_supabase_lib_client, caplog):
+        """Test that SupabaseClient handles API exceptions during source ID loading.
+            This verifies that if the API call to fetch source IDs fails,
+            an exception is raised and logged appropriately.
+            Args:
+                monkeypatch: pytest fixture to set environment variables.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         monkeypatch.setenv("SUPABASE_URL", MOCK_SUPABASE_URL)
         monkeypatch.setenv("SUPABASE_KEY", MOCK_SUPABASE_KEY)
 
@@ -132,7 +188,6 @@ class TestSupabaseClientInitialization:
                  SupabaseClient() # Exception should propagate from _load_source_ids
         assert "Error loading source IDs: API Error" in caplog.text
 
-
 class TestSupabaseClientMethods:
     @pytest.fixture
     def initialized_client(self, monkeypatch, mock_supabase_lib_client):
@@ -141,19 +196,44 @@ class TestSupabaseClientMethods:
         with patch('database_functions.create_client', return_value=mock_supabase_lib_client), \
              patch.object(SupabaseClient, '_load_source_ids', return_value=None):
             client = SupabaseClient()
-            # Manually set map after _load_source_ids is mocked away for init
             client.source_id_map = {'TESTSOURCE': 10, 'ANOTHER': 20}
             return client
 
     def test_get_source_id_found(self, initialized_client):
+        """Test that SupabaseClient can retrieve source IDs by name.
+            This verifies that the get_source_id method returns the correct ID
+            for a given source name, regardless of case.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+            Returns:
+                None
+        """
         assert initialized_client.get_source_id("TestSource") == 10
         assert initialized_client.get_source_id("testsource") == 10
         assert initialized_client.get_source_id("ANOTHER") == 20
 
     def test_get_source_id_not_found(self, initialized_client):
+        """Test that SupabaseClient returns None for unknown source names.
+            This verifies that the get_source_id method returns None when the source name
+            does not exist in the source_id_map.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+            Returns:
+                None
+        """
         assert initialized_client.get_source_id("UnknownSource") is None
 
-    def test_store_article_to_source_articles_success(self, initialized_client, mock_supabase_lib_client, caplog): # Added caplog
+    def test_store_article_to_source_articles_success(self, initialized_client, mock_supabase_lib_client, caplog): 
+        """Test that SupabaseClient can store an article in the SourceArticles table.
+            This verifies that the store_article_to_source_articles method correctly inserts
+            an article into the database and returns the inserted record.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         caplog.set_level(logging.INFO) # Set log level for root logger
         article = {
             "source": "TestSource", "uniqueName": "article-1", "headline": "Test Headline",
@@ -181,6 +261,15 @@ class TestSupabaseClientMethods:
         assert "Successfully stored article in SourceArticles: Test Headline" in caplog.text
 
     def test_store_article_uses_id_if_uniqueName_missing_and_published_at_variant(self, initialized_client, mock_supabase_lib_client):
+        """Test that SupabaseClient uses 'id' as uniqueName if 'uniqueName' is missing.
+            This verifies that the store_article_to_source_articles method can handle articles
+            that do not have a 'uniqueName' field and uses the 'id' field instead.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+            Returns:
+                None
+        """
         article = {
             "source": "TestSource", "id": "article-fallback-id", "headline": "Test Headline",
             "href": "/news/article-1", "url": "http://example.com/news/article-1",
@@ -197,13 +286,32 @@ class TestSupabaseClientMethods:
         assert call_args["uniqueName"] == "article-fallback-id"
         assert call_args["publishedAt"] == "2023-01-01T00:00:00Z" # Should be converted to camelCase
 
-    def test_store_article_no_source_id_raises_value_error(self, initialized_client, caplog): # Renamed
+    def test_store_article_no_source_id_raises_value_error(self, initialized_client, caplog):
+        """Test that SupabaseClient raises ValueError if source ID is not found.
+            This verifies that the store_article_to_source_articles method raises a ValueError
+            when the source name does not exist in the source_id_map.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         article = {"source": "UnknownSource", "headline": "Headline"}
         with pytest.raises(ValueError, match="No source ID found for source name: UnknownSource"):
             initialized_client.store_article_to_source_articles(article)
         # The method itself raises, no need to check log for this specific error message here.
 
-    def test_store_article_db_error_propagates_and_logs(self, initialized_client, mock_supabase_lib_client, caplog): # Renamed
+    def test_store_article_db_error_propagates_and_logs(self, initialized_client, mock_supabase_lib_client, caplog):
+        """Test that SupabaseClient handles database write errors.
+            This verifies that if the database insertion fails, the exception is propagated
+            and logged appropriately.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         article = {"source": "TestSource", "headline": "Headline"}
         mock_supabase_lib_client.table.return_value.insert.return_value.execute.side_effect = Exception("DB Write Error")
 
@@ -211,7 +319,17 @@ class TestSupabaseClientMethods:
             initialized_client.store_article_to_source_articles(article)
         assert "Error posting to SourceArticles table: DB Write Error" in caplog.text
 
-    def test_store_article_no_data_returned_from_db_is_none(self, initialized_client, mock_supabase_lib_client, caplog): # Renamed
+    def test_store_article_no_data_returned_from_db_is_none(self, initialized_client, mock_supabase_lib_client, caplog): 
+        """Test that SupabaseClient handles cases where no data is returned from the database.
+            This verifies that if the database insertion returns no data, the method returns None
+            and logs the success message.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+                mock_supabase_lib_client: Mocked Supabase client instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         caplog.set_level(logging.INFO) # Set log level for root logger
         article = {"source": "TestSource", "headline": "A Headline"}
         mock_insert_response = MagicMock()
@@ -223,8 +341,16 @@ class TestSupabaseClientMethods:
         # The code logs "Successfully stored article..." BEFORE checking if result.data is usable.
         assert "Successfully stored article in SourceArticles: A Headline" in caplog.text
 
-
     def test_store_articles_to_source_articles_mix_success_failure(self, initialized_client, caplog):
+        """Test that SupabaseClient can store multiple articles, handling successes and failures.
+            This verifies that the store_articles_to_source_articles method can process a list of articles,
+            storing those that succeed and logging errors for those that fail.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         articles = [
             {"source": "TestSource", "headline": "Art1", "uniqueName": "u1"},
             {"source": "UnknownSource", "headline": "Art2", "uniqueName": "u2"},
@@ -250,7 +376,16 @@ class TestSupabaseClientMethods:
             # Check that the specific error for Article 2 was logged
             assert "Failed to store article Art2: No source ID for UnknownSource" in caplog.text
 
-    def test_store_articles_to_source_articles_all_fail_due_to_generic_exception(self, initialized_client, caplog): # Renamed
+    def test_store_articles_to_source_articles_all_fail_due_to_generic_exception(self, initialized_client, caplog):
+        """Test that SupabaseClient handles failures when all articles fail to store.
+            This verifies that the store_articles_to_source_articles method returns 0
+            and logs an error message when all articles fail due to a generic exception.
+            Args:
+                initialized_client: Fixture providing an initialized SupabaseClient instance.
+                caplog: pytest fixture to capture log messages.
+            Returns:
+                None
+        """
         articles = [{"source": "TestSource", "headline": "ArtFail1", "uniqueName": "uf1"}]
         # Patch the single store method to always raise a generic exception
         with patch.object(initialized_client, 'store_article_to_source_articles', side_effect=Exception("Generic save error")):

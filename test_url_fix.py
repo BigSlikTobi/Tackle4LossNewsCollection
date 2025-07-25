@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """
+NON_PRODUCTION TEST SCRIPT
 Test script to demonstrate that the URL encoding bug has been fixed.
+Manual verification of URLs in both local and GitHub Actions environments.
+This script tests URLs that were previously problematic, ensuring they are now correctly formatted.
+It checks that the scheme (http/https) is not encoded and that the URLs work as expected.
+The script prints the results for both local and GitHub Actions environments, confirming the fix.
+This is a standalone script and does not require any external dependencies.
+It is intended to be run in both local development and GitHub Actions environments.
 """
 
 import os

@@ -10,7 +10,11 @@ logger = logging.getLogger(__name__)
 async def get_default_sources() -> List[Dict[str, Any]]:
     """
     Fetch news sources from Supabase database.
-    
+    This function retrieves the list of news sources from the NewsSource table in Supabase.
+    It returns a list of dictionaries, each containing the source name, URL, base URL,
+    execution status, and whether it is a primary source.
+    Args:
+        None
     Returns:
         List of news source configurations
     """
@@ -55,7 +59,11 @@ async def get_default_sources() -> List[Dict[str, Any]]:
 async def get_team_news_sources() -> List[Dict[str, Any]]:
     """
     Fetch team news sources from Supabase database.
-    
+    This function retrieves the list of team news sources from the TeamNewsSource table in Supabase.
+    It returns a list of dictionaries, each containing the source ID, creation date, URL,
+    base URL, team name, and execution status.
+    Args:
+        None  
     Returns:
         List of team news source configurations
     """

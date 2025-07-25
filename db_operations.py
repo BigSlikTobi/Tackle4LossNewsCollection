@@ -10,13 +10,15 @@ logger = logging.getLogger(__name__)
 
 class DatabaseManager:
     """Handle database operations for news articles."""
-    
     def __init__(self, supabase_client=None):
         """
         Initialize the database manager.
-        
+        If a Supabase client is provided, it will be used for database operations.
+        If not, it will operate in a mock mode, printing to console instead of storing in the database.
         Args:
             supabase_client: SupabaseClient instance for database operations
+        Returns:
+            None
         """
         self.supabase_client = supabase_client
         if supabase_client:
@@ -27,10 +29,10 @@ class DatabaseManager:
     def store_article(self, article: Dict[str, Any]) -> bool:
         """
         Store a single article in the database.
-        
+        This method retrieves the source ID for the article's source and stores the article data in the SourceArticles table.
+        If the Supabase client is not provided, it will print the article data to the console.  
         Args:
-            article: Article data dictionary
-            
+            article: Article data dictionary with keys like 'source', 'uniqueName', 'id', etc.      
         Returns:
             True if successful, False otherwise
         """
@@ -52,10 +54,10 @@ class DatabaseManager:
     def store_articles(self, articles: List[Dict[str, Any]]) -> int:
         """
         Store multiple articles in the database.
-        
+        This method iterates over a list of article dictionaries and stores each one in the SourceArticles table.
+        If the Supabase client is not provided, it will print the articles to the console.
         Args:
-            articles: List of article data dictionaries
-            
+            articles: List of article data dictionaries with keys like 'source', 'uniqueName', 'id', etc.
         Returns:
             Number of articles successfully processed
         """
@@ -75,12 +77,17 @@ class DatabaseManager:
     def get_existing_articles(self, limit: int = 100) -> List[Dict[str, Any]]:
         """
         Retrieve existing articles from the database.
-        
+        This method is a placeholder for future implementation.
+        If the Supabase client is not provided, it will return an empty list.
+        If implemented, it should return a list of article data dictionaries.
         Args:
             limit: Maximum number of articles to retrieve
-            
+        If the Supabase client is not provided, it will return an empty list.
+        If implemented, it should return a list of article data dictionaries.   
         Returns:
             List of article data dictionaries
+        If the Supabase client is not provided, it will return an empty list.
+        If implemented, it should return a list of article data dictionaries.
         """
         logger.info(f"Would retrieve up to {limit} articles")
         # For now, just return an empty list

@@ -5,6 +5,12 @@ import os
 from unittest.mock import patch, MagicMock, AsyncMock, mock_open, call, PropertyMock
 import logging # For caplog settings
 
+"""
+Integration tests for the news_fetcher module, covering various scenarios including
+blacklisting, LLM extraction, and fetching from multiple sources.
+These tests use pytest and mock various components to simulate different behaviors.
+"""
+
 # Modules to test
 from news_fetcher import (
     NewsItem,
@@ -62,11 +68,24 @@ PARSED_LLM_EXTRACTED_ARTICLES = [
 # --- Fixtures ---
 @pytest.fixture
 def mock_llm_strategy():
+    """Mock for the LLMExtractionStrategy instance.
+    This is used to simulate the behavior of the LLM extraction strategy without needing a real LLM.
+    Args:
+        None
+    Returns:
+        MagicMock: A mock object that simulates the LLMExtractionStrategy.
+    """
     return MagicMock(spec=LLMExtractionStrategy)
 
 @pytest.fixture
 def mock_async_web_crawler():
-    # Mock for the AsyncWebCrawler instance
+    """Mock for the AsyncWebCrawler instance.
+    This is used to simulate the behavior of the AsyncWebCrawler without needing a real web crawler.
+    Args:
+        None
+    Returns:
+        tuple: A tuple containing the mock class and the mock instance.
+    """
     crawler_instance_mock = AsyncMock(spec=AsyncWebCrawler)
     # Mock the arun method on the instance
     crawler_instance_mock.arun = AsyncMock()
@@ -87,6 +106,13 @@ def mock_async_web_crawler():
 # --- Basic Tests ---
 class TestNewsItemModel:
     def test_news_item_creation_and_aliases(self):
+        """Test creating a NewsItem and checking its attributes and aliases.
+        This verifies that the NewsItem model correctly initializes and aliases fields.
+        Args:
+            None
+        Returns:
+            None
+        """
         data = {
             "id": "unique-id-123", # alias for uniqueName
             "source": "TestSource",
@@ -106,6 +132,13 @@ class TestNewsItemModel:
         assert item.isProcessed is True
 
     def test_news_item_defaults(self):
+        """Test creating a NewsItem with default values.
+        This verifies that default values are correctly set when not provided.
+        Args:
+            None
+        Returns:
+            None
+        """
         data = {
             "id": "uid", "source": "s", "headline": "h",
             "href": "/h", "url": "http://u.c/h", "published_at": "2023-01-01"
@@ -115,6 +148,13 @@ class TestNewsItemModel:
 
 class TestBlacklistFunctions:
     def test_load_blacklist_success(self):
+        """Test loading the blacklist from a JSON file.
+        This verifies that the blacklist is loaded correctly from a file and parsed into a list of URLs.
+        Args:
+            None
+        Returns:
+            None
+        """
         with patch('builtins.open', mock_open(read_data=SAMPLE_BLACKLIST_JSON_CONTENT)) as m_open, \
              patch('json.load', return_value=json.loads(SAMPLE_BLACKLIST_JSON_CONTENT)) as m_json_load:
             blacklist = load_blacklist()
@@ -123,6 +163,13 @@ class TestBlacklistFunctions:
             m_json_load.assert_called_once()
 
     def test_load_blacklist_file_not_found(self, caplog):
+        """Test loading the blacklist when the file does not exist.
+        This verifies that the function handles a missing file gracefully and logs a warning.
+        Args:
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.WARNING)
         with patch('builtins.open', mock_open()) as m_open:
             m_open.side_effect = FileNotFoundError("File not here")
@@ -131,6 +178,13 @@ class TestBlacklistFunctions:
             assert "blacklist.json not found" in caplog.text
 
     def test_load_blacklist_json_decode_error(self, caplog):
+        """Test loading the blacklist when the JSON is invalid.
+        This verifies that the function handles JSON decode errors gracefully and logs an error.
+        Args:
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.ERROR)
         with patch('builtins.open', mock_open(read_data="invalid json")) as m_open, \
              patch('json.load', side_effect=json.JSONDecodeError("err", "doc", 0)) as m_json_load:
@@ -140,6 +194,13 @@ class TestBlacklistFunctions:
             m_json_load.assert_called_once()
 
     def test_is_url_blacklisted(self):
+        """Test checking if a URL is blacklisted.
+        This verifies that the function correctly identifies blacklisted URLs and non-blacklisted URLs.
+        Args:
+            None
+        Returns:
+            None
+        """
         blacklist = EXPECTED_BLACKLIST
         assert is_url_blacklisted("http://badsite.com/anypage", blacklist) is True
         assert is_url_blacklisted("http://anotherbad.com/path/subpath", blacklist) is True
@@ -151,6 +212,7 @@ class TestBlacklistFunctions:
 class TestFetchNewsInitial:
     @pytest.fixture(autouse=True)
     def set_env_vars_for_fetch_news(self, monkeypatch):
+        """Set environment variables needed for fetch_news tests."""
         monkeypatch.setenv("DEEPSEEK_API_KEY", "dummy_deepseek_key_for_litellm")
         yield
         # monkeypatch will auto-cleanup
@@ -158,6 +220,15 @@ class TestFetchNewsInitial:
     async def test_fetch_news_basic_success_path(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """Test the basic success path of fetch_news.
+        This verifies that fetch_news can successfully fetch and parse news items using the LLM.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.INFO)
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -220,6 +291,17 @@ class TestFetchNewsInitial:
     async def test_fetch_news_arun_returns_no_content(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """
+        Test the behavior of fetch_news when no content is extracted.
+        This verifies that fetch_news handles the case where the LLM returns no content
+        and logs an appropriate error message.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.ERROR) # Check for "Giving up" or similar error
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -240,6 +322,16 @@ class TestFetchNewsInitial:
     async def test_fetch_news_arun_returns_empty_string_content(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """ Test the behavior of fetch_news when arun returns an empty string.
+        This verifies that fetch_news handles the case where the LLM returns an empty string
+        and logs an appropriate error message.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.ERROR)
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -261,6 +353,15 @@ class TestFetchNewsInitial:
     async def test_fetch_news_json_decode_error_from_llm_output(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """Test the behavior of fetch_news when the LLM output is not valid JSON.
+        This verifies that fetch_news handles JSON decode errors gracefully and logs an error.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.ERROR)
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -286,6 +387,15 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
     async def test_fetch_news_retry_logic(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """Test the retry logic of fetch_news when arun fails initially.
+        This verifies that fetch_news retries the crawling process and eventually succeeds.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:    
+            None
+        """
         caplog.set_level(logging.INFO)
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -320,6 +430,16 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
     async def test_fetch_news_timeout_error(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """
+        Test the behavior of fetch_news when a timeout occurs during crawling.
+        This verifies that fetch_news handles timeout errors gracefully and logs an appropriate message.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.ERROR)
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -341,6 +461,16 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
     async def test_fetch_news_deepseek_provider_sets_litellm_params(
         self, mock_async_web_crawler, mock_llm_strategy, monkeypatch
     ):
+        """Test that fetch_news sets LITELLM_MODEL_ALIAS and DEEPSEEK_API_KEY for DeepSeek provider.
+        This verifies that the correct model and API base are set in the LLMExtractionStrategy
+        when using the DeepSeek provider.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            monkeypatch: pytest fixture to modify environment variables.
+        Returns:
+            None
+        """
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
         mock_arun_result = MagicMock()
         mock_arun_result.extracted_content = LLM_EXTRACTED_CONTENT_JSON_STRING # Dummy content
@@ -388,6 +518,15 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
     async def test_fetch_news_item_blacklisted(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """Test that fetch_news skips blacklisted URLs.
+        This verifies that fetch_news correctly identifies and skips URLs that are in the blacklist.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.DEBUG) # To see "Skipping blacklisted URL"
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -419,6 +558,14 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
     async def test_fetch_news_max_items_respected(
         self, mock_async_web_crawler, mock_llm_strategy
     ):
+        """Test that fetch_news respects the max_items parameter.
+        This verifies that fetch_news limits the number of items returned based on max_items.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+        Returns:
+            None
+        """
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
         # LLM returns 2 items, but max_items is 1
         mock_arun_result = MagicMock()
@@ -456,6 +603,15 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
     async def test_fetch_news_content_as_bytes(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """Test that fetch_news can handle LLM output as bytes.
+        This verifies that fetch_news can decode and parse LLM output that is provided as bytes.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None    
+        """
         caplog.set_level(logging.INFO)
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -477,6 +633,16 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
     async def test_fetch_news_slug_uniqueness(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
     ):
+        """Test that fetch_news generates unique slugs for items with the same slug base.
+        This verifies that fetch_news can handle cases where multiple items have the same slug base
+        and generates unique slugs for each item.
+        Args:
+            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
+            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.INFO)
         mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
 
@@ -530,6 +696,15 @@ class TestFetchFromAllSources:
     async def test_fetch_all_success_and_source_override(
         self, mock_sources_list, caplog
     ):
+        """Test fetching from multiple sources with source override.
+        This verifies that fetch_from_all_sources can handle multiple sources,
+        correctly overrides the source field in the items, and logs the process.
+        Args:
+            mock_sources_list: List of sources to fetch from.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.INFO)
 
         # Mock fetch_news to return different items for different sources
@@ -538,6 +713,18 @@ class TestFetchFromAllSources:
         mock_s3_items = [{"id": "s3a1", "headline": "S3 Article 1", "source": "llm-output-s3", "url":"http://s3.com/a1", "href":"/a1", "published_at":"pa"}]
 
         async def mock_fetch_news_side_effect(url, base_url, provider, api_token, **kwargs):
+            """
+            Mocked fetch_news function to return predefined items based on URL.
+            This simulates fetching news from different sources.
+            Args:   
+                url (str): The URL to fetch news from.
+                base_url (str): The base URL for the source.
+                provider (str): The LLM provider.
+                api_token (str): The API token for the LLM provider.
+                **kwargs: Additional keyword arguments.
+            Returns:
+                list: A list of news items.
+            """
             if url == "http://s1.com":
                 return mock_s1_items
             elif url == "http://s3.com":
@@ -568,11 +755,30 @@ class TestFetchFromAllSources:
             assert "Successfully scraped 1 raw items from Source3" in caplog.text
             assert "Finished fetching from all sources. Total items collected: 2" in caplog.text
 
-
     async def test_fetch_all_one_source_fails(self, mock_sources_list, caplog):
+        """Test fetching from multiple sources where one source fails.
+        This verifies that fetch_from_all_sources can handle errors from individual sources,
+        logs the error, and continues fetching from other sources.
+        Args:
+            mock_sources_list: List of sources to fetch from.
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.INFO) # To see "Successfully scraped" info logs and error logs
 
         async def mock_fetch_news_side_effect(url, base_url, provider, api_token, **kwargs):
+            """ Mocked fetch_news function to simulate different behaviors based on URL.
+            This simulates fetching news from different sources, with one source raising an error.
+            Args:
+                url (str): The URL to fetch news from.
+                base_url (str): The base URL for the source.
+                provider (str): The LLM provider.
+                api_token (str): The API token for the LLM provider.
+                **kwargs: Additional keyword arguments.                   
+            Returns:
+                 list: A list of news items or raises an error for a specific source.
+            """
             if url == "http://s1.com":
                 # Simulate fetch_news raising an unhandled error for this source
                 raise Exception("Big problem at S1")
@@ -591,6 +797,14 @@ class TestFetchFromAllSources:
             assert "Successfully scraped 1 raw items from Source3" in caplog.text
 
     async def test_fetch_all_no_enabled_sources(self, caplog):
+        """Test fetching from all sources when no sources are enabled.
+        This verifies that fetch_from_all_sources handles the case where no sources are marked for execution,
+        logs a warning, and returns an empty list.
+        Args:
+            caplog: pytest fixture to capture log messages.
+        Returns:
+            None
+        """
         caplog.set_level(logging.WARNING)
         disabled_sources = [
             {"name": "SourceX", "url": "http://sx.com", "base_url": "http://sx.com", "execute": False}

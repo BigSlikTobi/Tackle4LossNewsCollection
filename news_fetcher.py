@@ -16,15 +16,8 @@ from urllib.parse import urlparse
 
 
 # Set up logging
-# Note: Assuming logging is configured elsewhere (e.g., in pipeline.py)
 # If running this file standalone, configure logging here.
 logger = logging.getLogger(__name__)
-
-# --- Debugging: Increase Verbosity ---
-# Consider enabling these for detailed GHA debugging
-# logging.getLogger("crawl4ai").setLevel(logging.DEBUG)
-# logging.getLogger("litellm").setLevel(logging.DEBUG)
-# -------------------------------------
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -64,7 +57,15 @@ MODEL_MAP = {
 # ---------------------------------------------------------------------------
 
 def load_blacklist() -> List[str]:
-    """Read blacklist.json and return the list of URLs."""
+    """
+    Read blacklist.json and return the list of URLs.
+    This function loads the blacklist from a JSON file and returns a list of blacklisted URLs.
+    If the file is not found or contains invalid JSON, it logs a warning and returns an empty list.
+    Args:
+        None
+    Returns:
+        List of blacklisted URLs as strings
+    """
     try:
         with open("blacklist.json", "r", encoding="utf-8") as handle:
             data = json.load(handle)
@@ -77,7 +78,15 @@ def load_blacklist() -> List[str]:
         return []
 
 def is_url_blacklisted(url: str, blacklist: List[str]) -> bool:
-    """Return *True* if *url* starts with any of the black‑listed prefixes."""
+    """
+    Return *True* if *url* starts with any of the black‑listed prefixes.
+    This function checks if the given URL starts with any of the prefixes in the blacklist.
+    Args:
+        url: The URL to check
+        blacklist: List of blacklisted URL prefixes
+    Returns:
+        True if the URL is blacklisted, False otherwise
+    """
     return any(url.startswith(bad) for bad in blacklist)
 
 # ---------------------------------------------------------------------------
@@ -93,8 +102,22 @@ async def fetch_news(
     max_items: int = 10,
     time_period: str = "last 24 hours",
 ) -> List[Dict[str, Any]]:
-    """Scrape one site and return a list of JSON‑serialisable news items."""
-
+    """
+    Scrape one site and return a list of JSON‑serialisable news items.""
+    This function uses the Crawl4AI library to scrape a webpage for news articles.
+    It extracts article data based on the provided schema and returns a list of dictionaries.
+    Args:
+        url: The URL of the webpage to scrape
+        base_url: The base URL to resolve relative links
+        provider: The LLM provider to use for extraction (openai, gemini, anthropic, deepseek)
+        api_token: API token for the LLM provider
+        schema: Pydantic model class defining the expected structure of the news items
+        max_items: Maximum number of articles to extract
+        time_period: Time period to consider for articles (e.g., "last 24 hours")
+    Returns:
+        List of dictionaries representing the extracted news items
+    """
+    # Load the blacklist from the JSON file
     blacklist = load_blacklist()
 
     # --- Debugging: Log API Token Usage ---
@@ -422,7 +445,18 @@ async def fetch_from_all_sources(
     provider: str,
     api_token: str,
 ) -> List[Dict[str, Any]]:
-    """Fetch articles from all *enabled* sources and merge the results."""
+    """
+    Fetch articles from all *enabled* sources and merge the results.
+    This function iterates over a list of sources, checks if each source is enabled, 
+    and then fetches articles from those sources. It uses the `fetch_news` function to scrape each source's 
+    URL and returns a combined list of articles.
+    Args:
+        sources: List of source dictionaries, each containing 'name', 'url', 'base_url', etc.
+        provider: The LLM provider to use for extraction (openai, gemini, anthropic, deepseek)
+        api_token: API token for the LLM provider   
+    Returns:
+        List of dictionaries representing the combined articles from all enabled sources
+    """
 
     all_items: List[Dict[str, Any]] = []
     enabled_sources = [site for site in sources if site.get("execute", True)]
