@@ -117,3 +117,54 @@ The news collection pipelines generally follow these steps:
 7.  **Logging and Output**:
     *   Throughout the process, detailed logs are generated.
     *   The pipelines output summaries of their activity, such as the number of articles fetched and stored.
+
+## CI/CD Process
+
+The project includes a comprehensive set of GitHub Actions workflows that automate testing and deployment.
+
+### Main Pipeline (`ci.yml`)
+* **Triggers**: Runs on pushes and pull requests to `main`, `master`, or `develop`.
+* **Multi-Python Testing**: Executes the test suite against Python 3.11 – 3.13.
+* **Dependency Caching**: Speeds up installs by caching pip packages.
+* **System Dependencies**: Installs Chrome and Playwright to support browser-based tests.
+* **Code Quality Checks**: Runs flake8 linting and mypy type checking.
+* **Comprehensive Testing**: Executes all tests with coverage reporting.
+* **Security Scans**: Uses safety and bandit for vulnerability checks.
+* **Docker Build**: Builds the Docker image on pushes to the main branch.
+* **Status Notifications**: Prints success or failure messages at the end of the run.
+
+### Release Workflow (`release.yml`)
+* **Trigger**: Push of a version tag such as `v1.0.0`.
+* **Steps**: Runs the test suite, builds a tagged Docker image and automatically creates a GitHub release with notes.
+
+### Dependency Updates (`dependabot.yml`)
+Dependabot is configured to open weekly pull requests for Python packages, GitHub actions and Docker base images.
+
+### Running Tests Locally
+```bash
+pip install -r requirements.txt
+python -m pytest -v
+# With coverage
+pip install coverage
+coverage run -m pytest
+coverage report -m
+```
+
+### Docker Usage
+```bash
+docker build -t tackle4loss-news-collection .
+docker run -e OPENAI_API_KEY=your_key \
+           -e SUPABASE_URL=your_url \
+           -e SUPABASE_KEY=your_key \
+           tackle4loss-news-collection
+```
+
+### Creating a Release
+1. Tag the repository and push:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+2. The release workflow then runs automatically and publishes the tagged Docker image and GitHub release.
+
+You can monitor workflow runs in the **Actions** tab of the repository.
