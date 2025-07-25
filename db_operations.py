@@ -82,12 +82,8 @@ class DatabaseManager:
         If implemented, it should return a list of article data dictionaries.
         Args:
             limit: Maximum number of articles to retrieve
-        If the Supabase client is not provided, it will return an empty list.
-        If implemented, it should return a list of article data dictionaries.   
         Returns:
             List of article data dictionaries
-        If the Supabase client is not provided, it will return an empty list.
-        If implemented, it should return a list of article data dictionaries.
         """
         logger.info(f"Would retrieve up to {limit} articles")
         # For now, just return an empty list
