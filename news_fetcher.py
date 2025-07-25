@@ -103,7 +103,7 @@ async def fetch_news(
     time_period: str = "last 24 hours",
 ) -> List[Dict[str, Any]]:
     """
-    Scrape one site and return a list of JSON‑serialisable news items.""
+    Scrape one site and return a list of JSON‑serialisable news items.
     This function uses the Crawl4AI library to scrape a webpage for news articles.
     It extracts article data based on the provided schema and returns a list of dictionaries.
     Args:
