@@ -21,7 +21,7 @@ from news_fetcher import (
     PROVIDER_MAP, # For verifying strategy params
     MODEL_MAP     # For verifying strategy params
 )
-from llm_selector import LLMSelector # For mocking
+from llm_selector import LLMSelector # For mocking (only OpenAI supported now)
 from crawl4ai import AsyncWebCrawler, CacheMode # For mocking and enums
 from crawl4ai.extraction_strategy import LLMExtractionStrategy # For mocking
 
@@ -210,12 +210,7 @@ class TestBlacklistFunctions:
 # --- Initial tests for fetch_news (more to be added) ---
 @pytest.mark.asyncio
 class TestFetchNewsInitial:
-    @pytest.fixture(autouse=True)
-    def set_env_vars_for_fetch_news(self, monkeypatch):
-        """Set environment variables needed for fetch_news tests."""
-        monkeypatch.setenv("DEEPSEEK_API_KEY", "dummy_deepseek_key_for_litellm")
-        yield
-        # monkeypatch will auto-cleanup
+    # Removed fixture setting DeepSeek env var; only OpenAI used
 
     async def test_fetch_news_basic_success_path(
         self, mock_async_web_crawler, mock_llm_strategy, caplog
@@ -458,61 +453,7 @@ class TestFetchNewsAdvanced(TestFetchNewsInitial): # Inherit fixtures if useful
             assert "Giving up – nothing extracted from http://timeout.com after" in caplog.text
             assert mock_crawler_instance.arun.call_count > 1 # Should retry on timeout
 
-    async def test_fetch_news_deepseek_provider_sets_litellm_params(
-        self, mock_async_web_crawler, mock_llm_strategy, monkeypatch
-    ):
-        """Test that fetch_news sets LITELLM_MODEL_ALIAS and DEEPSEEK_API_KEY for DeepSeek provider.
-        This verifies that the correct model and API base are set in the LLMExtractionStrategy
-        when using the DeepSeek provider.
-        Args:
-            mock_async_web_crawler: Mocked AsyncWebCrawler instance.
-            mock_llm_strategy: Mocked LLMExtractionStrategy instance.
-            monkeypatch: pytest fixture to modify environment variables.
-        Returns:
-            None
-        """
-        mock_crawler_cls, mock_crawler_instance = mock_async_web_crawler
-        mock_arun_result = MagicMock()
-        mock_arun_result.extracted_content = LLM_EXTRACTED_CONTENT_JSON_STRING # Dummy content
-        mock_crawler_instance.arun.return_value = mock_arun_result
-
-        # Clear any global os.environ changes made by other tests for LITELLM_MODEL_ALIAS
-        original_litellm_alias = os.environ.pop("LITELLM_MODEL_ALIAS", None)
-
-        # Mock os.environ.setdefault for this test only
-        mock_environ_setdefault = MagicMock(wraps=os.environ.setdefault)
-
-        with patch('news_fetcher.load_blacklist', return_value=[]), \
-             patch('news_fetcher.AsyncWebCrawler', mock_crawler_cls), \
-             patch('news_fetcher.LLMExtractionStrategy') as mock_strategy_constructor, \
-             patch('news_fetcher.clean_url', side_effect=lambda x: x), \
-             patch.dict(os.environ, {}, clear=True), \
-             patch('os.environ.setdefault', mock_environ_setdefault): # Ensure DEEPSEEK_API_KEY is set for the test context
-
-            monkeypatch.setenv("DEEPSEEK_API_KEY", "test_deepseek_key") # Critical for this test
-
-            await fetch_news(
-                url="http://deepseek-test.com", base_url="http://deepseek-test.com",
-                provider=LLMSelector.DEEPSEEK, api_token="test_deepseek_key"
-            )
-
-            mock_strategy_constructor.assert_called_once()
-            strategy_args = mock_strategy_constructor.call_args[1]
-
-            expected_model = MODEL_MAP[LLMSelector.DEEPSEEK]
-            assert strategy_args['llm_provider'] == PROVIDER_MAP[LLMSelector.DEEPSEEK]
-            assert strategy_args['model'] == expected_model
-            assert 'litellm_params' in strategy_args
-            assert strategy_args['litellm_params']['model'] == f"deepseek/{expected_model}"
-            assert strategy_args['litellm_params']['api_base'] == "https://api.deepseek.com/v1"
-
-            # Check that os.environ.setdefault was called to potentially set DEEPSEEK_API_KEY
-            # and LITELLM_MODEL_ALIAS
-            mock_environ_setdefault.assert_any_call("DEEPSEEK_API_KEY", "test_deepseek_key")
-            mock_environ_setdefault.assert_any_call("LITELLM_MODEL_ALIAS", f"{expected_model}=deepseek/{expected_model}")
-
-        if original_litellm_alias: # Restore if it was there
-            os.environ["LITELLM_MODEL_ALIAS"] = original_litellm_alias
+    # Removed DeepSeek-specific test; only OpenAI supported
 
 
     async def test_fetch_news_item_blacklisted(

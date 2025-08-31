@@ -90,8 +90,7 @@ class NewsFetchingPipeline:
     Args:
         sources: Optional list of sources to fetch news from. If not provided, it will use the default sources defined 
         in the source manager.
-        llm_provider: Optional LLM provider to use (e.g., "openai", "gemini", etc.). If not provided, 
-        it defaults to the environment variable LLM_PROVIDER.
+    llm_provider: Optional LLM provider (only 'openai' supported). Ignored if not 'openai'.
         llm_model: Optional LLM model to use. If not provided, it defaults to the environment variable LLM_MODEL.
     Returns:
         None
