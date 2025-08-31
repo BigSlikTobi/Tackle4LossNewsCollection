@@ -8,17 +8,12 @@ from llm_selector import LLMSelector, get_available_llm_providers, create_llm_se
 
 # Test data
 MOCK_OPENAI_API_KEY = "sk-openai_mock_key"
-MOCK_GEMINI_API_KEY = "gemini_mock_key"
-MOCK_ANTHROPIC_API_KEY = "anthropic_mock_key"
-MOCK_DEEPSEEK_API_KEY = "deepseek_mock_key"
+# Removed other provider mock keys; only OpenAI supported
 
 @pytest.fixture(autouse=True)
 def clear_env_vars():
     # Clear relevant env vars before each test to ensure isolation
-    vars_to_clear = [
-        "LLM_PROVIDER", "OPENAI_API_KEY", "GEMINI_API_KEY",
-        "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY"
-    ]
+    vars_to_clear = ["LLM_PROVIDER", "OPENAI_API_KEY"]
     original_values = {var: os.environ.get(var) for var in vars_to_clear}
     for var in vars_to_clear:
         if var in os.environ:
@@ -95,77 +90,7 @@ class TestLLMSelectorInitialization:
             mock_openai_constructor.assert_called_once_with(api_key=MOCK_OPENAI_API_KEY)
             assert selector.client is not None
 
-    def test_explicit_provider_gemini_with_env_key(self, monkeypatch):
-        """Test that LLMSelector initializes Gemini client when API key is set in environment.
-            This verifies that the Gemini client is initialized correctly when the API key is provided
-            through an environment variable.        
-        Args:
-            monkeypatch: pytest fixture to set environment variables.   
-        Returns:
-            None
-        """
-        monkeypatch.setenv("GEMINI_API_KEY", MOCK_GEMINI_API_KEY)
-        # Patch the actual 'google.generativeai.configure' and 'google.generativeai.GenerativeModel'
-        with patch('google.generativeai.configure') as mock_gemini_configure, \
-             patch('google.generativeai.GenerativeModel') as mock_gemini_model:
-            selector = LLMSelector(provider=LLMSelector.GEMINI)
-            assert selector.provider == LLMSelector.GEMINI
-            assert selector.api_key == MOCK_GEMINI_API_KEY
-            mock_gemini_configure.assert_called_once_with(api_key=MOCK_GEMINI_API_KEY)
-            # Client for Gemini is the genai module itself after configuration
-            assert selector.client is not None # Should be the 'google.generativeai' module mock
-
-    def test_explicit_provider_anthropic_with_env_key(self, monkeypatch):
-        """Test that LLMSelector initializes Anthropic client when API key is set in environment.
-            This verifies that the Anthropic client is initialized correctly when the API key is provided
-            through an environment variable.    
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("ANTHROPIC_API_KEY", MOCK_ANTHROPIC_API_KEY)
-        with patch('anthropic.Anthropic') as mock_anthropic_constructor:
-            selector = LLMSelector(provider=LLMSelector.ANTHROPIC)
-            assert selector.provider == LLMSelector.ANTHROPIC
-            assert selector.api_key == MOCK_ANTHROPIC_API_KEY
-            mock_anthropic_constructor.assert_called_once_with(api_key=MOCK_ANTHROPIC_API_KEY)
-            assert selector.client is not None
-
-    def test_explicit_provider_deepseek_with_env_key(self, monkeypatch):
-        """Test that LLMSelector initializes DeepSeek client when API key is set in environment.
-            This verifies that the DeepSeek client is initialized correctly when the API key is provided
-            through an environment variable. Note: DeepSeek uses OpenAI's client structure.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("DEEPSEEK_API_KEY", MOCK_DEEPSEEK_API_KEY)
-        with patch('openai.OpenAI') as mock_openai_constructor: # DeepSeek uses OpenAI client
-            selector = LLMSelector(provider=LLMSelector.DEEPSEEK)
-            assert selector.provider == LLMSelector.DEEPSEEK
-            assert selector.api_key == MOCK_DEEPSEEK_API_KEY
-            mock_openai_constructor.assert_called_once_with(
-                api_key=MOCK_DEEPSEEK_API_KEY,
-                base_url="https://api.deepseek.com/v1"
-            )
-            assert selector.client is not None
-
-    def test_provider_from_env_variable(self, monkeypatch):
-        """Test that LLMSelector picks provider from environment variable if not explicitly set.
-            This verifies that the LLMSelector uses the LLM_PROVIDER environment variable to determine
-            which provider to use when no provider is passed to the constructor.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("LLM_PROVIDER", LLMSelector.GEMINI)
-        monkeypatch.setenv("GEMINI_API_KEY", MOCK_GEMINI_API_KEY)
-        with patch('google.generativeai.configure'): # Don't care about client init for this test focus
-            selector = LLMSelector() # No provider passed, should pick from env
-            assert selector.provider == LLMSelector.GEMINI
+    # Removed tests for unsupported providers (Gemini, Anthropic, DeepSeek, env override)
 
     def test_unsupported_provider(self, caplog):
         """Test that LLMSelector raises an error for unsupported providers.
@@ -285,11 +210,8 @@ class TestLLMSelectorInfoAndDefaults:
         selector = LLMSelector(provider=LLMSelector.OPENAI)
         assert selector.get_default_model("chat") == LLMSelector.DEFAULT_MODELS[LLMSelector.OPENAI]["chat"]
 
-        selector_gemini = LLMSelector(provider=LLMSelector.GEMINI)
-        assert selector_gemini.get_default_model("chat") == LLMSelector.DEFAULT_MODELS[LLMSelector.GEMINI]["chat"]
-
-        selector_unknown = LLMSelector(provider="unknown")
-        assert selector_unknown.get_default_model("chat") == ""
+    selector_unknown = LLMSelector(provider="unknown")
+    assert selector_unknown.get_default_model("chat") == ""
 
 
 class TestClientInitializationFailures:
@@ -310,57 +232,7 @@ class TestClientInitializationFailures:
             assert "OpenAI package not installed" in caplog.text # Specific message from _initialize_openai
             assert "Failed to import required libraries for openai" not in caplog.text # Ensure generic isn't there
 
-    def test_gemini_import_error(self, monkeypatch, caplog):
-        """Test that LLMSelector handles Gemini import errors gracefully.
-            This verifies that the LLMSelector logs an error message when the Gemini package cannot be imported
-            and does not initialize the client.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-            caplog: pytest fixture to capture log messages.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("GEMINI_API_KEY", MOCK_GEMINI_API_KEY)
-        with patch('google.generativeai.configure', side_effect=ImportError("Mocked Gemini import error")):
-            selector = LLMSelector(provider=LLMSelector.GEMINI)
-            assert selector.client is None
-            assert "Google Generative AI package not installed" in caplog.text
-            assert "Failed to import required libraries for gemini" not in caplog.text # Ensure generic isn't there
-
-    def test_anthropic_import_error(self, monkeypatch, caplog):
-        """Test that LLMSelector handles Anthropic import errors gracefully.
-            This verifies that the LLMSelector logs an error message when the Anthropic package cannot be imported
-            and does not initialize the client.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-            caplog: pytest fixture to capture log messages.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("ANTHROPIC_API_KEY", MOCK_ANTHROPIC_API_KEY)
-        with patch('anthropic.Anthropic', side_effect=ImportError("Mocked Anthropic import error")):
-            selector = LLMSelector(provider=LLMSelector.ANTHROPIC)
-            assert selector.client is None
-            assert "Anthropic package not installed" in caplog.text
-            assert "Failed to import required libraries for anthropic" not in caplog.text # Ensure generic isn't there
-
-    def test_deepseek_import_error_if_openai_missing(self, monkeypatch, caplog):
-        """Test that LLMSelector handles DeepSeek import errors gracefully when OpenAI is not available.
-            This verifies that the LLMSelector logs an error message when the OpenAI package cannot be imported
-            and does not initialize the DeepSeek client.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-            caplog: pytest fixture to capture log messages.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("DEEPSEEK_API_KEY", MOCK_DEEPSEEK_API_KEY)
-        # Deepseek uses openai client, so mock its import error
-        with patch('openai.OpenAI', side_effect=ImportError("Mocked OpenAI import error for DeepSeek")):
-            selector = LLMSelector(provider=LLMSelector.DEEPSEEK)
-            assert selector.client is None
-            assert "OpenAI package not installed" in caplog.text # Specific from _initialize_deepseek
-            assert "Failed to import required libraries for deepseek" not in caplog.text # Ensure generic isn't there
+    # Removed import error tests for other providers
 
 @pytest.mark.asyncio
 class TestLLMSelectorGenerateText:
@@ -410,105 +282,7 @@ class TestLLMSelectorGenerateText:
             assert passed_kwargs['model'] == LLMSelector.DEFAULT_MODELS[LLMSelector.OPENAI]["chat"]
             assert passed_kwargs['messages'] == [{"role": "user", "content": prompt}]
 
-    async def test_generate_text_gemini_success(self, monkeypatch, mock_gemini_client):
-        """Test that LLMSelector can generate text using Gemini client successfully.
-            This verifies that the generate_text method calls the Gemini client correctly
-            and returns the expected response.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-            mock_gemini_client: Mocked Gemini client instance.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("GEMINI_API_KEY", MOCK_GEMINI_API_KEY)
-
-        async def immediate_sync_executor(func, *args, **kwargs):
-            return func(*args, **kwargs)
-
-        with patch('google.generativeai.configure', MagicMock()), \
-             patch('google.generativeai.GenerativeModel', return_value=mock_gemini_client.GenerativeModel.return_value), \
-             patch('asyncio.to_thread', new_callable=MagicMock, side_effect=immediate_sync_executor) as mock_to_thread:
-
-            selector = LLMSelector(provider=LLMSelector.GEMINI)
-
-            prompt = "Test prompt for Gemini"
-            response = await selector.generate_text(prompt)
-
-            assert response == "Gemini mock response"
-            mock_to_thread.assert_called_once()
-
-            # The first positional argument to to_thread is the function
-            called_func = mock_to_thread.call_args[0][0]
-            # The rest of the positional arguments to to_thread are the args for that function
-            called_args_for_func = mock_to_thread.call_args[0][1:]
-
-            assert called_func == mock_gemini_client.GenerativeModel.return_value.generate_content
-            assert called_args_for_func[0] == prompt
-
-    async def test_generate_text_anthropic_success(self, monkeypatch, mock_anthropic_client):
-        """Test that LLMSelector can generate text using Anthropic client successfully.
-            This verifies that the generate_text method calls the Anthropic client correctly
-            and returns the expected response.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-            mock_anthropic_client: Mocked Anthropic client instance.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("ANTHROPIC_API_KEY", MOCK_ANTHROPIC_API_KEY)
-
-        async def immediate_sync_executor(func, *args, **kwargs):
-            return func(*args, **kwargs)
-
-        with patch('anthropic.Anthropic', return_value=mock_anthropic_client), \
-             patch('asyncio.to_thread', new_callable=MagicMock, side_effect=immediate_sync_executor) as mock_to_thread:
-
-            selector = LLMSelector(provider=LLMSelector.ANTHROPIC)
-            assert selector.client == mock_anthropic_client
-
-            prompt = "Test prompt for Anthropic"
-            response = await selector.generate_text(prompt)
-
-            assert response == "Anthropic mock response"
-            mock_to_thread.assert_called_once()
-            call_args = mock_to_thread.call_args[0]
-            assert call_args[0] == mock_anthropic_client.messages.create
-            passed_kwargs = mock_to_thread.call_args[1]
-            assert passed_kwargs['model'] == LLMSelector.DEFAULT_MODELS[LLMSelector.ANTHROPIC]["chat"]
-            assert passed_kwargs['messages'] == [{"role": "user", "content": prompt}]
-            assert passed_kwargs['max_tokens'] is not None # Check a default param
-
-    async def test_generate_text_deepseek_success(self, monkeypatch, mock_deepseek_client):
-        """Test that LLMSelector can generate text using DeepSeek client successfully.
-            This verifies that the generate_text method calls the DeepSeek client correctly
-            and returns the expected response.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-            mock_deepseek_client: Mocked DeepSeek client instance.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("DEEPSEEK_API_KEY", MOCK_DEEPSEEK_API_KEY)
-
-        async def immediate_sync_executor(func, *args, **kwargs):
-            return func(*args, **kwargs)
-
-        with patch('openai.OpenAI', return_value=mock_deepseek_client), \
-             patch('asyncio.to_thread', new_callable=MagicMock, side_effect=immediate_sync_executor) as mock_to_thread:
-
-            selector = LLMSelector(provider=LLMSelector.DEEPSEEK)
-            assert selector.client == mock_deepseek_client
-
-            prompt = "Test prompt for DeepSeek"
-            response = await selector.generate_text(prompt)
-
-            assert response == "DeepSeek mock response"
-            mock_to_thread.assert_called_once()
-            call_args = mock_to_thread.call_args[0]
-            assert call_args[0] == mock_deepseek_client.chat.completions.create
-            passed_kwargs = mock_to_thread.call_args[1]
-            assert passed_kwargs['model'] == LLMSelector.DEFAULT_MODELS[LLMSelector.DEEPSEEK]["chat"]
-            assert passed_kwargs['messages'] == [{"role": "user", "content": prompt}]
+    # Removed generate_text tests for other providers
 
     async def test_generate_text_no_client(self, caplog):
         """Test that LLMSelector returns None when no client is available.
@@ -586,13 +360,8 @@ class TestLLMSelectorUtilityFunctions:
             None
         """
         monkeypatch.setenv("OPENAI_API_KEY", MOCK_OPENAI_API_KEY)
-        monkeypatch.setenv("GEMINI_API_KEY", MOCK_GEMINI_API_KEY)
-        monkeypatch.setenv("DEEPSEEK_API_KEY", MOCK_DEEPSEEK_API_KEY)
-
-        providers = get_available_llm_providers()
-        # Order doesn't matter for this check, convert to set
-        assert set(providers) == {LLMSelector.OPENAI, LLMSelector.GEMINI, LLMSelector.DEEPSEEK}
-        assert len(providers) == 3 # Ensure no duplicates if constants were same
+    providers = get_available_llm_providers()  # Only OpenAI considered
+    assert providers == [LLMSelector.OPENAI]
 
     def test_create_llm_selector_default(self, monkeypatch):
         """Test that create_llm_selector creates an LLMSelector with default provider OpenAI.
@@ -609,20 +378,5 @@ class TestLLMSelectorUtilityFunctions:
             assert isinstance(selector, LLMSelector)
             assert selector.provider == LLMSelector.OPENAI # Default
 
-    def test_create_llm_selector_specific_provider_and_model(self, monkeypatch):
-        """Test that create_llm_selector creates an LLMSelector for a specific provider and model.
-            This verifies that the create_llm_selector function initializes an LLMSelector with the specified
-            provider and model when provided.
-        Args:
-            monkeypatch: pytest fixture to set environment variables.
-        Returns:
-            None
-        """
-        monkeypatch.setenv("GEMINI_API_KEY", MOCK_GEMINI_API_KEY)
-        with patch('google.generativeai.configure'), \
-             patch('google.generativeai.GenerativeModel'): # Ensure model init is also patched
-             selector = create_llm_selector(provider=LLMSelector.GEMINI, model="gemini-custom")
-             assert isinstance(selector, LLMSelector)
-             assert selector.provider == LLMSelector.GEMINI
-             assert selector.model == "gemini-custom"
+    # Removed create_llm_selector test for other providers
 

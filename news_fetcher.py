@@ -40,17 +40,44 @@ class NewsItem(BaseModel):
 
 PROVIDER_MAP = {
     LLMSelector.OPENAI: "openai",
-    LLMSelector.GEMINI: "google",
-    LLMSelector.ANTHROPIC: "anthropic",
-    LLMSelector.DEEPSEEK: "deepseek",
 }
 
 MODEL_MAP = {
-    LLMSelector.OPENAI: "gpt-4o-mini",
-    LLMSelector.GEMINI: "gemini-pro",
-    LLMSelector.ANTHROPIC: "claude-3-sonnet", # Note: Original file had claude-3-sonnet, assuming this is intended. Update if needed.
-    LLMSelector.DEEPSEEK: "deepseek-reasoner",
+    LLMSelector.OPENAI: "gpt-5-nano",
 }
+
+# ---------------------------------------------------------------------------
+# Model validation (prevent silent fallback inside litellm/crawl4ai)
+# ---------------------------------------------------------------------------
+
+def _validate_model_supported(model: str) -> None:
+    """Validate that the requested model is supported by the installed litellm.
+
+    litellm will silently fall back to a default (often gpt-4o-mini) when an unknown
+    model name is passed. To avoid confusing logs (showing a different model than the
+    one configured), we proactively check if the model exists in litellm's registry.
+
+    If unsupported, we raise a ValueError instructing the user to either:
+      * upgrade litellm / crawl4ai for the new model, or
+      * choose a currently supported model.
+    """
+    try:
+        import litellm  # type: ignore
+        # litellm stores cost/context info per model. Presence indicates recognition.
+        known_models = set(getattr(litellm, "model_cost", {}).keys())
+        if model not in known_models:
+            raise ValueError(
+                f"Requested model '{model}' not found in litellm.model_cost (known: {len(known_models)} models). "
+                "The runtime is likely falling back to a default (e.g. gpt-4o-mini). "
+                "Upgrade dependencies or adjust MODEL_MAP to a supported model."
+            )
+    except ImportError:
+        logger.warning("litellm not available to validate model '%s' – skipping support check", model)
+    except Exception as exc:
+        # Re-raise ValueError (unsupported) but log any other unexpected error and continue.
+        if isinstance(exc, ValueError):
+            raise
+        logger.debug("Non-fatal issue during model validation: %s", exc)
 
 # ---------------------------------------------------------------------------
 # Helper functions
@@ -109,7 +136,7 @@ async def fetch_news(
     Args:
         url: The URL of the webpage to scrape
         base_url: The base URL to resolve relative links
-        provider: The LLM provider to use for extraction (openai, gemini, anthropic, deepseek)
+    provider: The LLM provider (only 'openai' supported)
         api_token: API token for the LLM provider
         schema: Pydantic model class defining the expected structure of the news items
         max_items: Maximum number of articles to extract
@@ -168,8 +195,16 @@ async def fetch_news(
     # Build Crawl4AI extraction strategy
     # ---------------------------------------------------------------------
 
-    crawl4ai_provider = PROVIDER_MAP.get(provider, "openai")
-    model = MODEL_MAP.get(provider, "gpt-4o-mini")
+    # Force provider to openai only
+    crawl4ai_provider = PROVIDER_MAP[LLMSelector.OPENAI]
+    model = MODEL_MAP[LLMSelector.OPENAI]
+
+    # Validate model support (fail fast instead of silent fallback)
+    try:
+        _validate_model_supported(model)
+    except ValueError as model_err:
+        logger.error("Aborting fetch: unsupported model '%s' (%s). Not falling back to gpt-4o-mini.", model, model_err)
+        return []
 
     strategy_kwargs: Dict[str, Any] = {
         "llm_provider": crawl4ai_provider,
@@ -180,19 +215,15 @@ async def fetch_news(
         "instruction": instruction,
         "temperature": 0.2,
         "model": model,
+        "service_tier": "flex",
+        # Enforce model selection for litellm backend explicitly
+        "litellm_params": {"model": model},
     }
 
-    if provider == LLMSelector.DEEPSEEK:
-        # LiteLLM mapping for DeepSeek
-        # Ensure Deepseek key is set if used - check llm_selector.py logic too
-        os.environ.setdefault("DEEPSEEK_API_KEY", api_token or "") # Pass token if available
-        os.environ.setdefault("LITELLM_MODEL_ALIAS", f"{model}=deepseek/{model}")
-        strategy_kwargs["litellm_params"] = {
-            "model": f"deepseek/{model}",
-            "api_base": "https://api.deepseek.com/v1",
-        }
-
     strategy = LLMExtractionStrategy(**strategy_kwargs)
+
+    # Debug: Log final strategy configuration to verify model is gpt-5-nano
+    logger.debug("LLMExtractionStrategy kwargs: %s", {k: v for k, v in strategy_kwargs.items() if k != 'schema'})
 
     logger.info("Using LLM provider=%s model=%s for URL: %s", provider, model, url)
 
@@ -452,7 +483,7 @@ async def fetch_from_all_sources(
     URL and returns a combined list of articles.
     Args:
         sources: List of source dictionaries, each containing 'name', 'url', 'base_url', etc.
-        provider: The LLM provider to use for extraction (openai, gemini, anthropic, deepseek)
+    provider: The LLM provider (only 'openai' supported)
         api_token: API token for the LLM provider   
     Returns:
         List of dictionaries representing the combined articles from all enabled sources
@@ -465,7 +496,7 @@ async def fetch_from_all_sources(
         logger.warning("No sources are marked for execution (execute=false).")
         return []
 
-    logger.info("Starting fetch for %d enabled sources using provider: %s", len(enabled_sources), provider)
+    logger.info("Starting fetch for %d enabled sources using provider: %s", len(enabled_sources), LLMSelector.OPENAI)
 
     # Use asyncio.gather for potential concurrency (optional)
     # tasks = []
@@ -493,15 +524,13 @@ async def fetch_from_all_sources(
              items = await fetch_news(
                  url=site["url"],
                  base_url=site["base_url"],
-                 provider=provider,
+                 provider=LLMSelector.OPENAI,
                  api_token=api_token,
-                 # Optional: Adjust max_items per source if needed
-                 # max_items=site.get("max_items", 10),
              )
-             results.append((site, items)) # Store site info with results
+             results.append((site, items))
          except Exception as exc:
              logger.error("Unhandled error during fetch_news for %s: %s", site_name, exc, exc_info=True)
-             results.append((site, exc)) # Store exception if fetch failed
+             results.append((site, exc))
 
 
     # Process results (whether sequential or concurrent)
